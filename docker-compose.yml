@@ -1,0 +1,13 @@
+version: "3.9"
+
+services:
+  bot:
+    build: .
+    restart: always
+    environment:
+      - DISCORD_TOKEN=${DISCORD_TOKEN}
+      - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
+      - OWNER_GUILD_ID=${OWNER_GUILD_ID}
+      - OWNER_ID=${OWNER_ID}
+      - OWNER_CHANNEL_ID=${OWNER_CHANNEL_ID}
+      - DISCORD_LOGGING=${DISCORD_LOGGING}

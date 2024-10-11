@@ -1,0 +1,48 @@
+{
+  "name": "discord-jira",
+  "version": "1.0.0",
+  "description": "A Discord bot helper integrating with Jira",
+  "author": {
+    "email": "sytertzp@gmail.com",
+    "name": "Duarte 'SyTeR' Brito"
+  },
+  "license": "MIT",
+  "private": true,
+  "homepage": "https://github.com/duartejbrito/discord-jira",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/duartejbrito/discord-jira.git"
+  },
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "dev-docker": "npm run build && docker compose down && docker compose --env-file .env.local up -d",
+    "format": "prettier --write \"**/*.{json,ts}\"",
+    "lint": "eslint . --ext ts --fix",
+    "build": "tsup src/index.ts --minify",
+    "start": "node ."
+  },
+  "dependencies": {
+    "colors": "^1.4.0",
+    "discord.js": "^14.7.1",
+    "dotenv": "^16.0.3",
+    "dotenv-expand": "^11.0.6"
+  },
+  "devDependencies": {
+    "@swc/core": "^1.7.26",
+    "@types/node": "^18.19.50",
+    "@types/node-schedule": "^2.1.7",
+    "@types/validator": "^13.12.2",
+    "@typescript-eslint/eslint-plugin": "^5.51.0",
+    "@typescript-eslint/parser": "^5.51.0",
+    "eslint": "^8.33.0",
+    "eslint-config-prettier": "^8.6.0",
+    "eslint-plugin-import": "^2.25.2",
+    "eslint-plugin-n": "^15.0.0",
+    "eslint-plugin-promise": "^6.0.0",
+    "prettier": "^2.8.4",
+    "tsup": "^6.6.0",
+    "tsx": "^3.12.3",
+    "typescript": "^4.9.5"
+  }
+}

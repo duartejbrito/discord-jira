@@ -41,31 +41,31 @@ jobs:
           name: app-build
           path: dist
       - uses: docker/setup-buildx-action@v3
-      - uses: docker/login-action@v3
-        if: github.event_name != 'pull_request'
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-      - uses: docker/login-action@v3
-        if: github.event_name != 'pull_request'
-        with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
-      - uses: docker/build-push-action@v6
-        with:
-          context: .
-          file: ./Dockerfile
-          platforms: linux/amd64
-          push: ${{ github.event_name != 'pull_request' }}
-          tags: |
-            ghcr.io/duartejbrito/oh-v-bot-2:latest
-            syter/oh-v-bot-2:latest
-  deploy:
-    if: github.event_name != 'pull_request'
-    needs: [build-docker]
-    runs-on: ubuntu-latest
-    steps:
-      - uses: joelwmale/webhook-action@cc1a66f987e1591785273fd6f9d2f7a9d8d7c9cd
-        with:
-          url: ${{ secrets.WEBHOOK_URL }}
+      # - uses: docker/login-action@v3
+      #   if: github.event_name != 'pull_request'
+      #   with:
+      #     registry: ghcr.io
+      #     username: ${{ github.actor }}
+      #     password: ${{ secrets.GITHUB_TOKEN }}
+      # - uses: docker/login-action@v3
+      #   if: github.event_name != 'pull_request'
+      #   with:
+      #     username: ${{ secrets.DOCKER_USERNAME }}
+      #     password: ${{ secrets.DOCKER_PASSWORD }}
+      # - uses: docker/build-push-action@v6
+      #   with:
+      #     context: .
+      #     file: ./Dockerfile
+      #     platforms: linux/amd64
+      #     push: ${{ github.event_name != 'pull_request' }}
+      #     tags: |
+      #       ghcr.io/duartejbrito/oh-v-bot-2:latest
+      #       syter/oh-v-bot-2:latest
+  # deploy:
+  #   if: github.event_name != 'pull_request'
+  #   needs: [build-docker]
+  #   runs-on: ubuntu-latest
+  #   steps:
+  #     - uses: joelwmale/webhook-action@cc1a66f987e1591785273fd6f9d2f7a9d8d7c9cd
+  #       with:
+  #         url: ${{ secrets.WEBHOOK_URL }}

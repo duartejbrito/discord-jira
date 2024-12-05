@@ -60,11 +60,11 @@ jobs:
           tags: |
             ghcr.io/duartejbrito/discord-jira:latest
             syter/discord-jira:latest
-  # deploy:
-  #   if: github.event_name != 'pull_request'
-  #   needs: [build-docker]
-  #   runs-on: ubuntu-latest
-  #   steps:
-  #     - uses: joelwmale/webhook-action@cc1a66f987e1591785273fd6f9d2f7a9d8d7c9cd
-  #       with:
-  #         url: ${{ secrets.WEBHOOK_URL }}
+  deploy:
+    if: github.event_name != 'pull_request'
+    needs: [build-docker]
+    runs-on: ubuntu-latest
+    steps:
+      - uses: joelwmale/webhook-action@cc1a66f987e1591785273fd6f9d2f7a9d8d7c9cd
+        with:
+          url: ${{ secrets.WEBHOOK_URL }}

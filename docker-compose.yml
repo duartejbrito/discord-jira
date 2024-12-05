@@ -2,12 +2,36 @@ version: "3.9"
 
 services:
   bot:
-    build: .
+    image: syter/discord-jira:latest
     restart: always
+    depends_on:
+      - db
     environment:
       - DISCORD_TOKEN=${DISCORD_TOKEN}
       - DISCORD_CLIENT_ID=${DISCORD_CLIENT_ID}
       - OWNER_GUILD_ID=${OWNER_GUILD_ID}
       - OWNER_ID=${OWNER_ID}
       - OWNER_CHANNEL_ID=${OWNER_CHANNEL_ID}
+      - PG_CONNECTION_STRING=postgres://${PG_USER}:${PG_PASSWORD}@${PG_LOCATION}:${PG_PORT}/${PG_DATABASE}
+      - PG_LOGGING=${PG_LOGGING}
+      - I18N_LOGGING=${I18N_LOGGING}
       - DISCORD_LOGGING=${DISCORD_LOGGING}
+  db:
+    image: postgres
+    restart: always
+    shm_size: 128mb
+    ports:
+      - ${PG_PORT}:5432
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASSWORD}
+      POSTGRES_USER: ${PG_USER}
+      POSTGRES_DB: ${PG_DATABASE}
+  adminer:
+    image: adminer
+    restart: always
+    ports:
+      - 56841:8080
+volumes:
+  pgdata:

@@ -1,13 +1,19 @@
 import * as deploy from "./deploy";
 import * as ping from "./ping";
+import * as setup from "./setup";
+import * as time from "./time";
 
 export const allCommands = {
   ping,
   deploy,
+  setup,
+  time,
 };
 
 export const commands = {
   ping,
+  setup,
+  time,
 };
 
 export const ownerCommands = {

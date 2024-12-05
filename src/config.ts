@@ -10,6 +10,8 @@ const {
   OWNER_ID,
   OWNER_LOG_CHANNEL_ID,
   DISCORD_LOGGING,
+  PG_CONNECTION_STRING,
+  PG_LOGGING,
 } = process.env;
 
 if (!DISCORD_TOKEN || !DISCORD_CLIENT_ID) {
@@ -23,4 +25,6 @@ export const config = {
   OWNER_ID,
   OWNER_LOG_CHANNEL_ID,
   DISCORD_LOGGING: DISCORD_LOGGING ? DISCORD_LOGGING === "true" : false,
+  PG_CONNECTION_STRING,
+  PG_LOGGING: PG_LOGGING ? PG_LOGGING === "true" : false,
 };

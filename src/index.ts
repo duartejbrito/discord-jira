@@ -1,7 +1,9 @@
 import { Client, Events, GatewayIntentBits } from "discord.js";
 import { allCommands } from "./commands";
 import { config } from "./config";
+import { initModels } from "./db/models";
 import { deployCommands, deployGuildCommands } from "./deploy-commands";
+import { initScheduledJobs } from "./scheduler";
 import { logInfo, logError, initLogger } from "./utils/logger";
 
 export const client = new Client({
@@ -14,6 +16,8 @@ client.once(Events.ClientReady, async () => {
     DisplayName: client.user!.displayName,
     Tag: client.user!.tag,
   });
+  await initModels();
+  initScheduledJobs();
 });
 
 client.on(Events.GuildCreate, async (guild) => {

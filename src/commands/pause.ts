@@ -2,6 +2,7 @@ import {
   CommandInteraction,
   InteractionContextType,
   SlashCommandBuilder,
+  MessageFlags,
 } from "discord.js";
 import { JiraConfig } from "../db/models";
 import { logInfo } from "../utils/logger";
@@ -27,12 +28,12 @@ export async function execute(interaction: CommandInteraction) {
       content: `Scheduled jobs have been ${
         config?.schedulePaused ? "paused" : "resumed"
       }.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   } else {
     return interaction.reply({
       content: "No Jira configuration found for this user.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 }

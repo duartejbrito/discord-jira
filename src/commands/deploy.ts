@@ -3,6 +3,7 @@ import {
   InteractionContextType,
   PermissionFlagsBits,
   SlashCommandBuilder,
+  MessageFlags,
 } from "discord.js";
 import { config } from "../config";
 import { deployCommands, deployGuildCommands } from "../deploy-commands";
@@ -21,7 +22,7 @@ export async function execute(interaction: CommandInteraction) {
   if (interaction.user.id !== config.OWNER_ID) {
     return await interaction.reply({
       content: "You do not have permission to use this command.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 
@@ -35,7 +36,7 @@ export async function execute(interaction: CommandInteraction) {
         .join("\n")}\nCommands deployed for guild ${
         config.OWNER_GUILD_ID
       }\n${ownerCommandsData.map((d) => `/${d.name}`).join("\n")}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     })
     .then(() => setTimeout(() => interaction.deleteReply(), 60000));
   logInfo("Deploy command executed", { GuildId: interaction.guildId! });

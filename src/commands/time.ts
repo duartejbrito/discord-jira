@@ -2,14 +2,16 @@ import {
   ActionRowBuilder,
   ButtonBuilder,
   ButtonStyle,
-  CommandInteraction,
+  ChatInputCommandInteraction,
   EmbedBuilder,
   InteractionContextType,
   InteractionReplyOptions,
+  InteractionEditReplyOptions,
   MessageComponentInteraction,
   MessagePayload,
   PermissionFlagsBits,
   SlashCommandBuilder,
+  MessageFlags,
 } from "discord.js";
 import { JiraConfig } from "../db/models";
 import { getIssuesWorked, getIssueWorklog, postWorklog } from "../jira";
@@ -41,7 +43,7 @@ export const data = new SlashCommandBuilder()
   );
 
 function replyOrFollowUp(
-  interaction: CommandInteraction,
+  interaction: ChatInputCommandInteraction,
   options: string | MessagePayload | InteractionReplyOptions
 ) {
   if (interaction.replied) {
@@ -49,13 +51,15 @@ function replyOrFollowUp(
   }
   if (interaction.deferred) {
     // Currently behaves the same but could change in the future
-    return interaction.editReply(options);
+    return interaction.editReply(
+      options as string | MessagePayload | InteractionEditReplyOptions
+    );
   }
   return interaction.reply(options);
 }
 
-export async function execute(interaction: CommandInteraction) {
-  await interaction.deferReply({ ephemeral: true });
+export async function execute(interaction: ChatInputCommandInteraction) {
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const daysAgo = interaction.options.get("days-ago", true);
   const hours = (interaction.options.get("hours", false)?.value as number) ?? 8;
@@ -66,14 +70,14 @@ export async function execute(interaction: CommandInteraction) {
   if (startDate.getDay() === 0 || startDate.getDay() === 6) {
     await replyOrFollowUp(interaction, {
       content: "You can't check your work on weekends.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
 
   await replyOrFollowUp(interaction, {
     content: `Checking your work for ${startDate.toDateString()}...`,
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   });
 
   const jiraConfig = await JiraConfig.findOne({
@@ -86,7 +90,7 @@ export async function execute(interaction: CommandInteraction) {
   if (!jiraConfig) {
     await replyOrFollowUp(interaction, {
       content: "You need to setup your Jira configuration first.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -107,7 +111,7 @@ export async function execute(interaction: CommandInteraction) {
   if (!response.ok) {
     await replyOrFollowUp(interaction, {
       content: `Failed to get your work: ${response.statusText}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -117,7 +121,7 @@ export async function execute(interaction: CommandInteraction) {
   if (data.total === 0) {
     await replyOrFollowUp(interaction, {
       content: `You didn't work on any issues for ${startDate.toDateString()}.`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }

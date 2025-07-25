@@ -1,8 +1,9 @@
 import {
-  CommandInteraction,
+  ChatInputCommandInteraction,
   InteractionContextType,
   PermissionFlagsBits,
   SlashCommandBuilder,
+  MessageFlags,
 } from "discord.js";
 import { JiraConfig } from "../db/models";
 import { getServerInfo } from "../jira";
@@ -39,8 +40,8 @@ export const data = new SlashCommandBuilder()
       .setRequired(false)
   );
 
-export async function execute(interaction: CommandInteraction) {
-  await interaction.deferReply({ ephemeral: true });
+export async function execute(interaction: ChatInputCommandInteraction) {
+  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const host = interaction.options.get("host", true);
   const username = interaction.options.get("username", true);
@@ -56,7 +57,7 @@ export async function execute(interaction: CommandInteraction) {
   if (!response.ok) {
     await interaction.followUp({
       content: `Failed to connect to Jira: ${response.statusText}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
     return;
   }
@@ -87,6 +88,6 @@ export async function execute(interaction: CommandInteraction) {
 
   await interaction.followUp({
     content: "Your Jira configuration has been saved.",
-    ephemeral: true,
+    flags: MessageFlags.Ephemeral,
   });
 }

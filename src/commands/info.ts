@@ -2,6 +2,7 @@ import {
   CommandInteraction,
   InteractionContextType,
   SlashCommandBuilder,
+  MessageFlags,
 } from "discord.js";
 import { JiraConfig } from "../db/models/JiraConfig";
 import { logInfo } from "../utils/logger";
@@ -28,12 +29,12 @@ export async function execute(interaction: CommandInteraction) {
 - Jira API Token: ${config.token}
 - Time JQL Override: ${config.timeJqlOverride}
 - Schedule Paused: ${config.schedulePaused ? "Yes" : "No"}`,
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   } else {
     return interaction.reply({
       content: "No Jira configuration found for this user.",
-      ephemeral: true,
+      flags: MessageFlags.Ephemeral,
     });
   }
 }

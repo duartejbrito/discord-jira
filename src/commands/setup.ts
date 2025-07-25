@@ -61,7 +61,7 @@ export async function execute(interaction: CommandInteraction) {
     return;
   }
 
-  await JiraConfig.findOrCreate({
+  const [config, created] = await JiraConfig.findOrCreate({
     where: {
       guildId: interaction.guildId!,
       userId: interaction.user.id,
@@ -76,6 +76,14 @@ export async function execute(interaction: CommandInteraction) {
       schedulePaused: false,
     },
   });
+
+  if (!created) {
+    config.host = host.value as string;
+    config.username = username.value as string;
+    config.token = token.value as string;
+    config.timeJqlOverride = jql?.value as string | undefined;
+    await config.save();
+  }
 
   await interaction.followUp({
     content: "Your Jira configuration has been saved.",

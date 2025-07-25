@@ -19,9 +19,16 @@ export function initScheduledJobs() {
     logInfo("Running daily job...");
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - (daysAgo as unknown as number));
-    const configs = await JiraConfig.findAll();
+    const configs = await JiraConfig.findAll({
+      where: {
+        schedulePaused: false,
+      },
+    });
 
     for (const config of configs) {
+      logInfo(`Processing config for user ${config.userId}`, {
+        GuildId: config.guildId,
+      });
       const response = await getIssuesWorked(
         config.host,
         config.username,
@@ -71,7 +78,12 @@ export function initScheduledJobs() {
       );
 
       if (worklogs.length !== 0) {
-        console.log(`Worklogs found for ${config.userId}`);
+        logInfo(
+          `Worklogs found for ${config.userId} with ${worklogs.length} entries`,
+          {
+            GuildId: config.guildId,
+          }
+        );
         continue;
       }
 

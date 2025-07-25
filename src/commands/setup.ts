@@ -73,6 +73,7 @@ export async function execute(interaction: CommandInteraction) {
       token: token.value as string,
       userId: interaction.user.id,
       timeJqlOverride: jql?.value as string | undefined,
+      schedulePaused: false,
     },
   });
 

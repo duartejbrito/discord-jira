@@ -1,4 +1,6 @@
 import * as deploy from "./deploy";
+import * as info from "./info";
+import * as pause from "./pause";
 import * as ping from "./ping";
 import * as setup from "./setup";
 import * as time from "./time";
@@ -8,12 +10,16 @@ export const allCommands = {
   deploy,
   setup,
   time,
+  pause,
+  info,
 };
 
 export const commands = {
   ping,
   setup,
   time,
+  pause,
+  info,
 };
 
 export const ownerCommands = {

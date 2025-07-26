@@ -59,8 +59,8 @@ jobs:
               if [[ -n "$file" && "$file" != *"File"* ]]; then
                 # Clean up the fields (remove leading/trailing spaces), but preserve leading spaces for file column
                 file=$(echo "$file" | sed 's/[[:space:]]*$//')  # Only remove trailing spaces from file
-                # Convert leading spaces to non-breaking spaces for better markdown rendering
-                file=$(echo "$file" | sed 's/^ */\&nbsp;/g' | sed 's/  /\&nbsp;\&nbsp;/g')
+                # Convert each leading space to non-breaking space for better markdown rendering
+                file=$(echo "$file" | sed 's/ /\&nbsp;/g')
                 stmts=$(echo "$stmts" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
                 branch=$(echo "$branch" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
                 funcs=$(echo "$funcs" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')

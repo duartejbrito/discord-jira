@@ -57,8 +57,7 @@ jobs:
             grep -v '^$' | \
             while IFS='|' read -r file stmts branch funcs lines uncovered; do
               if [[ -n "$file" && "$file" != *"File"* ]]; then
-                # Clean up the fields (remove leading/trailing spaces)
-                file=$(echo "$file" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
+                # Clean up the fields (remove leading/trailing spaces), but keep leading spaces for file column
                 stmts=$(echo "$stmts" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
                 branch=$(echo "$branch" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
                 funcs=$(echo "$funcs" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')

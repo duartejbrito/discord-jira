@@ -57,7 +57,10 @@ jobs:
             grep -v '^$' | \
             while IFS='|' read -r file stmts branch funcs lines uncovered; do
               if [[ -n "$file" && "$file" != *"File"* ]]; then
-                # Clean up the fields (remove leading/trailing spaces), but keep leading spaces for file column
+                # Clean up the fields (remove leading/trailing spaces), but preserve leading spaces for file column
+                file=$(echo "$file" | sed 's/[[:space:]]*$//')  # Only remove trailing spaces from file
+                # Convert leading spaces to non-breaking spaces for better markdown rendering
+                file=$(echo "$file" | sed 's/^ */\&nbsp;/g' | sed 's/  /\&nbsp;\&nbsp;/g')
                 stmts=$(echo "$stmts" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
                 branch=$(echo "$branch" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
                 funcs=$(echo "$funcs" | sed 's/^[[:space:]]*//;s/[[:space:]]*$//')
@@ -66,7 +69,7 @@ jobs:
                 
                 # Only add rows that have actual content
                 if [[ -n "$file" && "$file" != "" ]]; then
-                  echo "| $file | $stmts | $branch | $funcs | $lines | $uncovered |" >> $GITHUB_STEP_SUMMARY
+                  echo "|$file | $stmts | $branch | $funcs | $lines | $uncovered |" >> $GITHUB_STEP_SUMMARY
                 fi
               fi
             done

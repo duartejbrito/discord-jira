@@ -2,10 +2,11 @@ import { EmbedBuilder } from "discord.js";
 import * as schedule from "node-schedule";
 import { client } from "..";
 import { JiraConfig } from "../db/models";
-import { getIssuesWorked, getIssueWorklog, postWorklog } from "../jira";
 import { PageOfWorklogs, SearchResults } from "../jira/models";
-import { convertSeconds, distributeSeconds } from "../utils";
-import { logInfo } from "../utils/logger";
+import { JiraService } from "../services/JiraService";
+import { LoggerService } from "../services/LoggerService";
+import { ServiceContainer } from "../services/ServiceContainer";
+import { convertSeconds, distributeTime } from "../services/utils";
 
 export const tz = "Etc/UTC";
 export const dailyRule = "0 6 * * 2-6";
@@ -16,7 +17,10 @@ export const totalSeconds = hours * 3600;
 
 export function initScheduledJobs() {
   schedule.scheduleJob("daily-job", { rule: dailyRule, tz }, async () => {
-    logInfo("Running daily job...");
+    const container = ServiceContainer.getInstance();
+    const loggerService = container.get<LoggerService>("LoggerService");
+    const jiraService = container.get<JiraService>("JiraService");
+    loggerService.logInfo("Running daily job...");
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - (daysAgo as unknown as number));
     const configs = await JiraConfig.findAll({
@@ -26,10 +30,10 @@ export function initScheduledJobs() {
     });
 
     for (const config of configs) {
-      logInfo(`Processing config for user ${config.userId}`, {
+      loggerService.logInfo(`Processing config for user ${config.userId}`, {
         GuildId: config.guildId,
       });
-      const response = await getIssuesWorked(
+      const response = await jiraService.getIssuesWorked(
         config.host,
         config.username,
         config.token,
@@ -47,7 +51,7 @@ export function initScheduledJobs() {
       const data = (await response.json()) as SearchResults;
 
       if (data.total === 0) {
-        logInfo(`No work found for ${config.userId}`);
+        loggerService.logInfo(`No work found for ${config.userId}`);
         continue;
       }
 
@@ -59,7 +63,7 @@ export function initScheduledJobs() {
             summary: issue.fields.summary,
             assignee: issue.fields.assignee.displayName,
             worklogs: (await (
-              await getIssueWorklog(
+              await jiraService.getIssueWorklog(
                 config.host,
                 config.username,
                 config.token,
@@ -78,7 +82,7 @@ export function initScheduledJobs() {
       );
 
       if (worklogs.length !== 0) {
-        logInfo(
+        loggerService.logInfo(
           `Worklogs found for ${config.userId} with ${worklogs.length} entries`,
           {
             GuildId: config.guildId,
@@ -99,16 +103,20 @@ export function initScheduledJobs() {
         timeInSeconds: number;
       }[] = [];
 
-      const times = distributeSeconds(totalSeconds, issues.length, "fairly");
+      const timeDistribution = distributeTime(
+        totalSeconds,
+        issues.length,
+        "fairly"
+      );
       issuesWithTimes = issues.map((issue, index) => ({
         issue,
-        timeInSeconds: times[index],
-        times: convertSeconds(times[index]),
+        timeInSeconds: timeDistribution[index],
+        times: convertSeconds(timeDistribution[index]),
       }));
 
       await Promise.all(
         issuesWithTimes.map(async (issue) => {
-          return await postWorklog(
+          return await jiraService.postWorklog(
             config.host,
             config.username,
             config.token,

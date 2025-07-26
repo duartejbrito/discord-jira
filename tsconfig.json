@@ -4,8 +4,8 @@
     "module": "commonjs",
     "rootDir": "./src",
     "outDir": "./dist",
-    "typeRoots": ["./node_modules/@types", "./types"],
-    "types": ["json-schema"],
+    "typeRoots": ["./node_modules/@types", "./types", "./src/types"],
+    "types": ["json-schema", "jest"],
     "removeComments": true,
     "resolveJsonModule": true,
     "esModuleInterop": true,
@@ -15,5 +15,7 @@
     "skipLibCheck": true,
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
-  }
+  },
+  "include": ["src/**/*", "src/types/global.d.ts"],
+  "exclude": ["node_modules", "dist"]
 }

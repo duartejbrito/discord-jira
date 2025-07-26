@@ -1,7 +1,8 @@
 import { REST, Routes } from "discord.js";
 import { commandsData, ownerCommandsData } from "./commands";
 import { config } from "./config";
-import { logError, logInfo } from "./utils/logger";
+import { LoggerService } from "./services/LoggerService";
+import { ServiceContainer } from "./services/ServiceContainer";
 
 const rest = new REST({ version: "10" }).setToken(config.DISCORD_TOKEN);
 
@@ -11,11 +12,15 @@ export async function deployCommands() {
       body: commandsData,
     });
 
-    logInfo("Commands deployed", {
+    const container = ServiceContainer.getInstance();
+    const loggerService = container.get<LoggerService>("LoggerService");
+    loggerService.logInfo("Commands deployed", {
       Commands: commandsData.map((d) => `/${d.name}`).join("\n"),
     });
   } catch (error) {
-    logError(error as Error);
+    const container = ServiceContainer.getInstance();
+    const loggerService = container.get<LoggerService>("LoggerService");
+    loggerService.logError(error as Error);
   }
 }
 
@@ -31,11 +36,15 @@ export async function deployGuildCommands() {
       }
     );
 
-    logInfo("Commands deployed", {
+    const container = ServiceContainer.getInstance();
+    const loggerService = container.get<LoggerService>("LoggerService");
+    loggerService.logInfo("Commands deployed", {
       GuildId: config.OWNER_GUILD_ID!,
       Commands: ownerCommandsData.map((d) => `/${d.name}`).join("\n"),
     });
   } catch (error) {
-    logError(error as Error);
+    const container = ServiceContainer.getInstance();
+    const loggerService = container.get<LoggerService>("LoggerService");
+    loggerService.logError(error as Error);
   }
 }

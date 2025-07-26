@@ -1,18 +1,32 @@
-import { Client, Events, GatewayIntentBits } from "discord.js";
+import { Client, Events, GatewayIntentBits, MessageFlags } from "discord.js";
 import { allCommands } from "./commands";
 import { config } from "./config";
 import { initModels } from "./db/models";
 import { deployCommands, deployGuildCommands } from "./deploy-commands";
 import { initScheduledJobs } from "./scheduler";
-import { logInfo, logError, initLogger } from "./utils/logger";
+import { LoggerService } from "./services/LoggerService";
+import { ServiceContainer } from "./services/ServiceContainer";
 
 export const client = new Client({
   intents: [GatewayIntentBits.Guilds],
 });
 
 client.once(Events.ClientReady, async () => {
-  initLogger();
-  logInfo("Discord bot is ready! 🤖", {
+  // Initialize services
+  const container = ServiceContainer.initializeServices();
+  const loggerService = container.get<LoggerService>("LoggerService");
+
+  // Initialize logger with Discord client
+  loggerService.initialize(
+    client,
+    config.OWNER_LOG_CHANNEL_ID!,
+    config.DISCORD_LOGGING
+  );
+
+  // Keep the old initLogger for backward compatibility (now it's a no-op)
+  // initLogger() is no longer needed as service initialization handles it
+
+  loggerService.logInfo("Discord bot is ready! 🤖", {
     DisplayName: client.user!.displayName,
     Tag: client.user!.tag,
   });
@@ -28,7 +42,7 @@ client.on(Events.GuildCreate, async (guild) => {
 });
 
 client.on(Events.InteractionCreate, async (interaction) => {
-  if (!interaction.isCommand()) {
+  if (!interaction.isChatInputCommand()) {
     return;
   }
 
@@ -39,7 +53,9 @@ client.on(Events.InteractionCreate, async (interaction) => {
         interaction
       );
     } catch (error) {
-      logError(error as Error);
+      const container = ServiceContainer.getInstance();
+      const loggerService = container.get<LoggerService>("LoggerService");
+      loggerService.logError(error as Error);
       const errorMessage = "There was an error while executing this command!";
       if (interaction.replied || interaction.deferred) {
         await interaction.followUp({

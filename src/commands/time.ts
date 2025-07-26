@@ -13,10 +13,12 @@ import {
   SlashCommandBuilder,
   MessageFlags,
 } from "discord.js";
+import "../services/utils"; // Import to initialize String.prototype.format extension
 import { JiraConfig } from "../db/models";
-import { getIssuesWorked, getIssueWorklog, postWorklog } from "../jira";
 import { PageOfWorklogs, SearchResults } from "../jira/models";
-import { convertSeconds, distributeSeconds } from "../utils";
+import { JiraService } from "../services/JiraService";
+import { ServiceContainer } from "../services/ServiceContainer";
+import { TimeUtils } from "../services/TimeUtils";
 
 export const name = "time";
 
@@ -95,12 +97,15 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     return;
   }
 
+  const serviceContainer = ServiceContainer.getInstance();
+  const jiraService = serviceContainer.get<JiraService>("JiraService");
+
   const host = jiraConfig.host;
   const username = jiraConfig.username;
   const token = jiraConfig.token;
   const jqlOverride = jiraConfig.timeJqlOverride;
 
-  const response = await getIssuesWorked(
+  const response = await jiraService.getIssuesWorked(
     host,
     username,
     token,
@@ -134,7 +139,13 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         summary: issue.fields.summary,
         assignee: issue.fields.assignee.displayName,
         worklogs: (await (
-          await getIssueWorklog(host, username, token, issue.key, startDate)
+          await jiraService.getIssueWorklog(
+            host,
+            username,
+            token,
+            issue.key,
+            startDate
+          )
         ).json()) as PageOfWorklogs,
       };
     })
@@ -181,16 +192,20 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     embed.setFooter({
       text: `You logged ${
         worklogs.length
-      } worklogs for a total of ${convertSeconds(
+      } worklogs for a total of ${TimeUtils.formatTimeString(
         worklogs.reduce((acc, worklog) => acc + worklog.timeSpentSeconds, 0)
       )}.`,
     });
   } else {
-    const times = distributeSeconds(totalSeconds, issues.length, "fairly");
+    const timeDistribution = TimeUtils.distributeTimeFairly(
+      totalSeconds,
+      issues.length
+    );
+    const times = timeDistribution.fairDistribution || [];
     issuesWithTimes = issues.map((issue, index) => ({
       issue,
       timeInSeconds: times[index],
-      times: convertSeconds(times[index]),
+      times: TimeUtils.formatTimeString(times[index]),
     }));
 
     embed.addFields(
@@ -228,7 +243,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     if (i.customId === "submit") {
       await Promise.all(
         issuesWithTimes.map(async (issue) => {
-          return await postWorklog(
+          return await jiraService.postWorklog(
             host,
             username,
             token,

@@ -5,7 +5,8 @@ import {
   MessageFlags,
 } from "discord.js";
 import { JiraConfig } from "../db/models/JiraConfig";
-import { logInfo } from "../utils/logger";
+import { LoggerService } from "../services/LoggerService";
+import { ServiceContainer } from "../services/ServiceContainer";
 
 export const name = "info";
 
@@ -15,7 +16,13 @@ export const data = new SlashCommandBuilder()
   .setContexts([InteractionContextType.Guild]);
 
 export async function execute(interaction: CommandInteraction) {
-  logInfo("Info command executed", { GuildId: interaction.guildId! });
+  const container = ServiceContainer.getInstance();
+  const loggerService = container.get<LoggerService>("LoggerService");
+
+  loggerService.logInfo("Executing info command", {
+    GuildId: interaction.guildId,
+    UserId: interaction.user.id,
+  });
 
   const config = await JiraConfig.findOne({
     where: { guildId: interaction.guildId!, userId: interaction.user.id },

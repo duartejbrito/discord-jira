@@ -8,3 +8,6 @@ yarn.lock
 pnpm-lock.yaml
 
 dist
+
+# Test coverage reports
+coverage

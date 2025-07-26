@@ -1,5 +1,10 @@
 # Discord Jira Bot 🤖
 
+[![Build Status](https://github.com/duartejbrito/discord-jira/actions/workflows/rollup.yml/badge.svg)](https://github.com/duartejbrito/discord-jira/actions/workflows/rollup.yml)
+[![Docker Pulls](https://img.shields.io/docker/pulls/syter/discord-jira)](https://hub.docker.com/r/syter/discord-jira)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+[![Node.js](https://img.shields.io/badge/node.js-22.17.1+-green.svg)](https://nodejs.org/)
+
 A powerful Discord bot that integrates with Jira to help you track and log work time directly from Discord. Built with TypeScript and Discord.js, this bot enables seamless time tracking and work logging functionality.
 
 ## ✨ Features
@@ -11,6 +16,9 @@ A powerful Discord bot that integrates with Jira to help you track and log work 
 - **🔄 Flexible Distribution**: Automatically distribute hours across multiple issues worked on
 - **⏸️ Pause/Resume**: Control when automatic logging should run
 - **🔒 Secure**: Individual user configurations with encrypted API tokens
+- **🧪 Well Tested**: Comprehensive test suite with coverage reporting
+- **🐳 Docker Ready**: Containerized deployment with multi-registry support
+- **📈 Monitoring**: Built-in logging and error tracking capabilities
 
 ## 🚀 Commands
 
@@ -24,7 +32,7 @@ A powerful Discord bot that integrates with Jira to help you track and log work 
 
 ## 📋 Prerequisites
 
-- Node.js 18+
+- Node.js 22.17.1+ (recommended)
 - PostgreSQL database
 - Discord Bot Token
 - Jira API access (username + API token)
@@ -85,13 +93,30 @@ npm start
 
 #### Docker
 
+**Using pre-built images:**
+
+```bash
+# From GitHub Container Registry
+docker pull ghcr.io/duartejbrito/discord-jira:latest
+docker run -d --env-file .env ghcr.io/duartejbrito/discord-jira:latest
+
+# From Docker Hub
+docker pull syter/discord-jira:latest
+docker run -d --env-file .env syter/discord-jira:latest
+
+# Using Docker Compose (recommended)
+npm run dev-docker
+```
+
+**Building locally:**
+
 ```bash
 # Build and run with Docker Compose
 npm run dev-docker
 
 # Or manually with Docker
 docker build -t discord-jira .
-docker run discord-jira
+docker run --env-file .env discord-jira
 ```
 
 ## 🔧 Configuration
@@ -131,13 +156,38 @@ export const hours = 8; // Hours to log daily
 
 ```
 src/
-├── commands/          # Discord slash commands
+├── commands/         # Discord slash commands
 ├── config.ts         # Environment configuration
 ├── db/               # Database models and setup
 ├── jira/             # Jira API integration
 ├── scheduler/        # Automated time logging
+├── services/         # Core business logic services
+├── types/            # TypeScript type definitions
 └── utils/            # Utility functions and logging
+tests/
+├── commands/         # Command tests
+├── db/               # Database tests
+├── services/         # Service tests
+├── __mocks__/        # Test mocks
+└── setup.ts          # Test configuration
 ```
+
+## 🚀 CI/CD Pipeline
+
+This project uses GitHub Actions for continuous integration and deployment:
+
+- **🔄 Automated Testing**: Runs on every push and pull request
+- **📊 Coverage Reports**: Generates detailed test coverage reports
+- **🐳 Docker Build**: Automatically builds and pushes Docker images
+- **📦 Multi-Registry**: Publishes to both GitHub Container Registry and Docker Hub
+- **🔍 Code Quality**: Automated linting and formatting checks
+
+### Docker Images
+
+The bot is available as Docker images:
+
+- `ghcr.io/duartejbrito/discord-jira:latest` (GitHub Container Registry)
+- `syter/discord-jira:latest` (Docker Hub)
 
 ## 🔄 Development Scripts
 
@@ -145,18 +195,64 @@ src/
 npm run dev          # Start development server with hot reload
 npm run build        # Build for production
 npm run start        # Start production server
+npm run test         # Run tests
+npm run test:watch   # Run tests in watch mode
+npm run test:ci      # Run tests with coverage for CI/CD
 npm run lint         # Run ESLint
 npm run format       # Format code with Prettier
 npm run dev-docker   # Build and run with Docker Compose
 ```
 
+## 🧪 Testing & Coverage
+
+This project includes comprehensive testing with Jest:
+
+- **Unit Tests**: Testing individual components and services
+- **Integration Tests**: Testing database interactions and external APIs
+- **Coverage Reports**: Automated coverage reporting with HTML output
+- **CI/CD Integration**: Tests run automatically on every push and pull request
+
+Run tests locally:
+
+```bash
+npm test              # Run all tests once
+npm run test:watch    # Run tests in watch mode for development
+npm run test:ci       # Run tests with coverage report
+```
+
+Coverage reports are generated in the `coverage/` directory and include detailed HTML reports for easy review.
+
 ## 🤝 Contributing
+
+We welcome contributions! This project follows best practices for code quality and testing.
+
+### Development Workflow
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add some amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+3. Write tests for your changes
+4. Ensure all tests pass (`npm test`)
+5. Run linting and formatting (`npm run lint && npm run format`)
+6. Commit your changes (`git commit -m 'Add some amazing feature'`)
+7. Push to the branch (`git push origin feature/amazing-feature`)
+8. Open a Pull Request
+
+### Code Quality Standards
+
+- **Testing**: All new features should include comprehensive tests
+- **Coverage**: Maintain high test coverage (aim for >80%)
+- **Linting**: Code must pass ESLint checks
+- **Formatting**: Use Prettier for consistent code formatting
+- **TypeScript**: Maintain strict typing throughout the codebase
+
+### Before Submitting
+
+```bash
+npm test              # Ensure all tests pass
+npm run lint          # Check for linting issues
+npm run format        # Format code consistently
+npm run build         # Verify the build works
+```
 
 ## 📝 License
 

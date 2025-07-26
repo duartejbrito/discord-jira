@@ -39,7 +39,63 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
-      - run: npm run test:ci
+      - run: npm run test:ci 2>&1 | tee test_output.log
+      - name: Generate Coverage Summary
+        run: |
+          echo "## 📊 Test Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+
+          # Show the Jest coverage table directly from output
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          if [ -f "test_output.log" ]; then
+            # Extract coverage table from Jest output
+            sed -n '/^----/,/^Test Suites:/p' test_output.log | head -20 >> $GITHUB_STEP_SUMMARY
+          else
+            echo "Coverage table not found in test output" >> $GITHUB_STEP_SUMMARY
+          fi
+          echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📦 **Download the 'coverage-report' artifact for detailed HTML report**" >> $GITHUB_STEP_SUMMARY
+          if [ -f "coverage/lcov.info" ]; then
+            echo "| Metric | Percentage |" >> $GITHUB_STEP_SUMMARY
+            echo "|--------|------------|" >> $GITHUB_STEP_SUMMARY
+            
+            # Extract overall coverage percentages from lcov.info using simple approach
+            TOTAL_LINES=$(grep -c "^LF:" coverage/lcov.info)
+            COVERED_LINES=$(grep -c "^LH:" coverage/lcov.info)
+            TOTAL_FUNCTIONS=$(grep -c "^FNF:" coverage/lcov.info)
+            COVERED_FUNCTIONS=$(grep -c "^FNH:" coverage/lcov.info)
+            TOTAL_BRANCHES=$(grep -c "^BRF:" coverage/lcov.info)
+            COVERED_BRANCHES=$(grep -c "^BRH:" coverage/lcov.info)
+            
+            # Sum up all the values
+            LINES_FOUND=$(grep "^LF:" coverage/lcov.info | cut -d: -f2 | awk '{sum += $1} END {print sum}')
+            LINES_HIT=$(grep "^LH:" coverage/lcov.info | cut -d: -f2 | awk '{sum += $1} END {print sum}')
+            FUNCTIONS_FOUND=$(grep "^FNF:" coverage/lcov.info | cut -d: -f2 | awk '{sum += $1} END {print sum}')
+            FUNCTIONS_HIT=$(grep "^FNH:" coverage/lcov.info | cut -d: -f2 | awk '{sum += $1} END {print sum}')
+            BRANCHES_FOUND=$(grep "^BRF:" coverage/lcov.info | cut -d: -f2 | awk '{sum += $1} END {print sum}')
+            BRANCHES_HIT=$(grep "^BRH:" coverage/lcov.info | cut -d: -f2 | awk '{sum += $1} END {print sum}')
+            
+            # Calculate percentages
+            if [ "$LINES_FOUND" -gt 0 ]; then
+              LINE_PCT=$(awk "BEGIN {printf \"%.1f\", $LINES_HIT * 100 / $LINES_FOUND}")
+              echo "| 📝 Lines | ${LINE_PCT}% (${LINES_HIT}/${LINES_FOUND}) |" >> $GITHUB_STEP_SUMMARY
+            fi
+            if [ "$FUNCTIONS_FOUND" -gt 0 ]; then
+              FUNC_PCT=$(awk "BEGIN {printf \"%.1f\", $FUNCTIONS_HIT * 100 / $FUNCTIONS_FOUND}")
+              echo "| � Functions | ${FUNC_PCT}% (${FUNCTIONS_HIT}/${FUNCTIONS_FOUND}) |" >> $GITHUB_STEP_SUMMARY
+            fi
+            if [ "$BRANCHES_FOUND" -gt 0 ]; then
+              BRANCH_PCT=$(awk "BEGIN {printf \"%.1f\", $BRANCHES_HIT * 100 / $BRANCHES_FOUND}")
+              echo "| 🌿 Branches | ${BRANCH_PCT}% (${BRANCHES_HIT}/${BRANCHES_FOUND}) |" >> $GITHUB_STEP_SUMMARY
+            fi
+          else
+            echo "❌ Coverage data not found" >> $GITHUB_STEP_SUMMARY
+          fi
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📦 **Download the 'coverage-report' artifact for detailed HTML report**" >> $GITHUB_STEP_SUMMARY
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-report

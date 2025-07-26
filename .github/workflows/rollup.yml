@@ -75,7 +75,10 @@ jobs:
             echo "| File | Coverage | Error |" >> $GITHUB_STEP_SUMMARY
             echo "|------|----------|-------|" >> $GITHUB_STEP_SUMMARY
             echo "| - | - | Coverage table not found in test output |" >> $GITHUB_STEP_SUMMARY
-          fi          echo "📦 **Download the 'coverage-report' artifact for detailed HTML report**" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "📦 **Download the 'coverage-report' artifact for detailed HTML report**" >> $GITHUB_STEP_SUMMARY
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-report

@@ -101,6 +101,38 @@ describe("JiraService", () => {
 
       expect(result).toBe(mockResponse);
     });
+
+    it("should use default JQL when no JQL parameter is provided", async () => {
+      const mockIssues = testDataFactory.createIssueData({
+        issues: [testDataFactory.createIssueData({ key: "DEFAULT-1" })],
+      });
+
+      const mockResponse = createMockResponse({
+        json: jest.fn().mockResolvedValue(mockIssues),
+      });
+
+      mockHttpService.fetch.mockResolvedValue(mockResponse);
+
+      // Call without JQL parameter to test default
+      const result = await jiraService.getIssuesWorked(
+        "test.atlassian.net",
+        "user",
+        "token"
+      );
+
+      // Verify the call was made with the default JQL
+      expect(mockHttpService.fetch).toHaveBeenCalledWith(
+        expect.stringContaining("/rest/api/3/search"),
+        expect.objectContaining({
+          method: "POST",
+          body: expect.stringContaining(
+            'assignee WAS currentUser() ON -1d AND status WAS \\"In Progress\\" ON -1d'
+          ),
+        })
+      );
+
+      expect(result).toBe(mockResponse);
+    });
   });
 
   describe("getCurrentUser", () => {

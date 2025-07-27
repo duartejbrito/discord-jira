@@ -82,6 +82,13 @@ describe("LoggerService", () => {
 
       expect(mockClient.channels.cache.get).toHaveBeenCalledWith("123456789");
     });
+
+    it("should initialize with default discordLogging parameter", () => {
+      // Test calling initialize without the third parameter to test default value
+      loggerService.initialize(mockClient, "123456789");
+
+      expect(mockClient.channels.cache.get).toHaveBeenCalledWith("123456789");
+    });
   });
 
   describe("Logging methods", () => {
@@ -146,7 +153,7 @@ describe("LoggerService", () => {
       loggerService.info("Test message", { userId: 123, action: "test" });
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("{\"userId\":123,\"action\":\"test\"}")
+        expect.stringContaining('{"userId":123,"action":"test"}')
       );
     });
   });
@@ -278,6 +285,68 @@ describe("LoggerService", () => {
       expect(LogType.WARN).toBe(1);
       expect(LogType.ERROR).toBe(2);
       expect(LogType.DEBUG).toBe(3);
+    });
+  });
+
+  describe("Legacy interface methods", () => {
+    beforeEach(() => {
+      loggerService.initialize(mockClient, "123456789", false);
+    });
+
+    it("should handle logInfo method without args parameter", () => {
+      loggerService.logInfo("Test info message");
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("[INFO]")
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Test info message")
+      );
+    });
+
+    it("should handle logWarn method without args parameter", () => {
+      loggerService.logWarn("Test warning message");
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("[WARN]")
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Test warning message")
+      );
+    });
+
+    it("should handle logDebug method without args parameter", () => {
+      loggerService.logDebug("Test debug message");
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("[DEBUG]")
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Test debug message")
+      );
+    });
+
+    it("should handle logError method without args parameter", () => {
+      loggerService.logError("Test error message");
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("[ERROR]")
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Test error message")
+      );
+    });
+
+    it("should handle logError method with Error object and no args", () => {
+      const error = new Error("Test error");
+      loggerService.logError(error);
+
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("[ERROR]")
+      );
+      expect(consoleSpy).toHaveBeenCalledWith(
+        expect.stringContaining("Test error")
+      );
     });
   });
 });

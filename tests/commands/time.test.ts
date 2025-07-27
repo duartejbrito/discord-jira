@@ -458,6 +458,19 @@ describe("Time Command", () => {
         time: 15000,
       });
 
+      // Test the filter function
+      const collectorCall =
+        mockMessage.createMessageComponentCollector.mock.calls[0][0];
+      const filterFunction = collectorCall.filter;
+
+      // Test that filter returns true for same user
+      const mockSameUserInteraction = { user: { id: "user123" } };
+      expect(filterFunction(mockSameUserInteraction)).toBe(true);
+
+      // Test that filter returns false for different user
+      const mockDifferentUserInteraction = { user: { id: "user-456" } };
+      expect(filterFunction(mockDifferentUserInteraction)).toBe(false);
+
       expect(mockCollector.on).toHaveBeenCalledWith(
         "collect",
         expect.any(Function)
@@ -486,6 +499,254 @@ describe("Time Command", () => {
       expect(mockInteraction.editReply).toHaveBeenCalledWith({
         content: expect.stringContaining("didn't work on any issues"),
         flags: MessageFlags.Ephemeral,
+      });
+    });
+  });
+
+  describe("replyOrFollowUp helper function", () => {
+    it("should use followUp when interaction has already replied", async () => {
+      // Set the date to ensure we don't hit weekend logic
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date("2025-07-30T10:00:00.000Z")); // Wednesday
+
+      const mockResponse = {
+        ok: false,
+        status: 401,
+        statusText: "Unauthorized",
+      };
+
+      // Mock the options that time command expects
+      (mockInteraction.options.get as jest.Mock)
+        .mockReturnValueOnce({ value: 1 }) // days-ago (Tuesday, not weekend)
+        .mockReturnValueOnce(null); // hours (optional)
+
+      // Mock findOne to return config so we don't hit config error
+      mockJiraConfig.findOne.mockResolvedValue({
+        host: "https://test.atlassian.net",
+        username: "test@example.com",
+        token: "test-token",
+        jql: "assignee = currentUser()",
+      } as any);
+
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue(mockResponse);
+
+      // Set interaction as already replied
+      mockInteraction.replied = true;
+      mockInteraction.deferred = false;
+
+      await execute(mockInteraction);
+
+      // Should use followUp instead of editReply since interaction already replied
+      expect(mockInteraction.followUp).toHaveBeenCalledWith({
+        content: expect.stringContaining("Failed to get your work"),
+        flags: MessageFlags.Ephemeral,
+      });
+
+      jest.useRealTimers();
+    });
+
+    it("should use reply when interaction is not deferred and not replied", async () => {
+      // Set the date to ensure we don't hit weekend logic
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date("2025-07-30T10:00:00.000Z")); // Wednesday
+
+      const mockResponse = {
+        ok: false,
+        status: 500,
+        statusText: "Internal Server Error",
+      };
+
+      // Mock the options that time command expects
+      (mockInteraction.options.get as jest.Mock)
+        .mockReturnValueOnce({ value: 1 }) // days-ago (Tuesday, not weekend)
+        .mockReturnValueOnce(null); // hours (optional)
+
+      // Mock findOne to return config so we don't hit config error
+      mockJiraConfig.findOne.mockResolvedValue({
+        host: "https://test.atlassian.net",
+        username: "test@example.com",
+        token: "test-token",
+        jql: "assignee = currentUser()",
+      } as any);
+
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue(mockResponse);
+
+      // Set interaction as not replied and not deferred
+      mockInteraction.replied = false;
+      mockInteraction.deferred = false;
+
+      await execute(mockInteraction);
+
+      // Should use reply directly since not deferred and not replied
+      expect(mockInteraction.reply).toHaveBeenCalledWith({
+        content: expect.stringContaining("Failed to get your work"),
+        flags: MessageFlags.Ephemeral,
+      });
+
+      jest.useRealTimers();
+    });
+  });
+
+  describe("message collector functionality", () => {
+    beforeEach(async () => {
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date("2025-07-30T10:00:00.000Z")); // Wednesday
+
+      (mockInteraction.options.get as jest.Mock)
+        .mockReturnValueOnce({ value: 1 }) // days-ago (Tuesday, not weekend)
+        .mockReturnValueOnce({ value: 8 }); // hours
+
+      // Mock findOne to return config
+      mockJiraConfig.findOne.mockResolvedValue({
+        host: "https://test.atlassian.net",
+        username: "test@example.com",
+        token: "test-token",
+        jql: "assignee = currentUser()",
+      } as any);
+
+      // Mock successful API response with issues
+      const mockResponse = {
+        ok: true,
+        json: jest.fn().mockResolvedValue({
+          total: 2,
+          issues: [
+            {
+              id: "ISSUE-1",
+              key: "ISSUE-1",
+              fields: {
+                summary: "Test Issue 1",
+                assignee: { displayName: "Test User" },
+              },
+              worklogs: [],
+            },
+            {
+              id: "ISSUE-2",
+              key: "ISSUE-2",
+              fields: {
+                summary: "Test Issue 2",
+                assignee: { displayName: "Test User" },
+              },
+              worklogs: [],
+            },
+          ],
+        }),
+      };
+
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue(mockResponse);
+      mockServices.IJiraService.getIssueWorklog.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue({ worklogs: [] }),
+      });
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
+    it("should handle submit button click in collector", async () => {
+      const mockCollector = {
+        on: jest.fn(),
+      };
+
+      // Mock the message and collector
+      const mockMessage = {
+        createMessageComponentCollector: jest
+          .fn()
+          .mockReturnValue(mockCollector),
+      };
+
+      mockInteraction.editReply.mockResolvedValue(mockMessage);
+      mockServices.IJiraService.postWorklog.mockResolvedValue({ ok: true });
+
+      await execute(mockInteraction);
+
+      // Get the collector event handlers
+      const onCollectHandler = mockCollector.on.mock.calls.find(
+        (call) => call[0] === "collect"
+      )[1];
+
+      // Mock interaction for submit button
+      const mockButtonInteraction = {
+        customId: "submit",
+        user: { id: "user123" },
+        update: jest.fn().mockResolvedValue({}),
+      };
+
+      // Test submit button functionality (covers lines 243-257)
+      await onCollectHandler(mockButtonInteraction);
+
+      expect(mockServices.IJiraService.postWorklog).toHaveBeenCalledTimes(2);
+      expect(mockButtonInteraction.update).toHaveBeenCalledWith({
+        content: "Time logged successfully.",
+        embeds: expect.any(Array),
+        components: [],
+      });
+    });
+
+    it("should handle collector end with no collected interactions", async () => {
+      const mockCollector = {
+        on: jest.fn(),
+      };
+
+      // Mock the message and collector
+      const mockMessage = {
+        createMessageComponentCollector: jest
+          .fn()
+          .mockReturnValue(mockCollector),
+      };
+
+      mockInteraction.editReply.mockResolvedValue(mockMessage);
+
+      await execute(mockInteraction);
+
+      // Get the collector event handlers
+      const onEndHandler = mockCollector.on.mock.calls.find(
+        (call) => call[0] === "end"
+      )[1];
+
+      // Mock collected interactions (empty)
+      const mockCollected = { size: 0 };
+
+      // Test collector end with no interactions (covers lines 266-267, 236)
+      await onEndHandler(mockCollected);
+
+      expect(mockInteraction.editReply).toHaveBeenCalledWith({
+        embeds: expect.any(Array),
+        components: [],
+      });
+    });
+
+    it("should handle collector end with collected interactions", async () => {
+      const mockCollector = {
+        on: jest.fn(),
+      };
+
+      // Mock the message and collector
+      const mockMessage = {
+        createMessageComponentCollector: jest
+          .fn()
+          .mockReturnValue(mockCollector),
+      };
+
+      mockInteraction.editReply.mockResolvedValue(mockMessage);
+
+      await execute(mockInteraction);
+
+      // Get the collector event handlers
+      const onEndHandler = mockCollector.on.mock.calls.find(
+        (call) => call[0] === "end"
+      )[1];
+
+      // Mock collected interactions (not empty)
+      const mockCollected = { size: 1 };
+
+      // Test collector end with collected interactions (covers the else branch)
+      await onEndHandler(mockCollected);
+
+      // Should not call editReply when there are collected interactions
+      expect(mockInteraction.editReply).not.toHaveBeenCalledWith({
+        embeds: expect.any(Array),
+        components: [],
       });
     });
   });

@@ -41,10 +41,12 @@ jobs:
           cache: "npm"
       # - run: npm run test:ci 2>&1 | tee test_output.log
       - uses: ArtiomTr/jest-coverage-report-action@v2
-        # with:
-        #   test-script: npm run test:ci
-        #   annotations: none
-        #   output: report-markdown
+        id: coverage
+        with:
+          annotations: none
+          output: comment, report-markdown
+      - name: Adding report markdown to step summary
+        run: echo '${{ steps.coverage.outputs.report }}' >> $GITHUB_STEP_SUMMARY
       - uses: actions/upload-artifact@v4
         with:
           name: coverage-report

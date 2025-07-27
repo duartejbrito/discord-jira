@@ -34,7 +34,7 @@ export interface ILoggerService {
   // Initialization method for Discord logging
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initialize(
-    client: any,
+    client: unknown,
     ownerLogChannelId: string,
     discordLogging?: boolean
   ): void;

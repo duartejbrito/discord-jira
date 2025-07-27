@@ -83,7 +83,8 @@ describe("Scheduler", () => {
   });
 
   describe("Scheduled Job Logic", () => {
-    let mockContainer: any;
+    let mockContainer: unknown;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let mockServices: any;
 
     beforeEach(() => {
@@ -165,6 +166,7 @@ describe("Scheduler", () => {
         "https://test.jira.com",
         "test@example.com",
         "token123",
+        // eslint-disable-next-line quotes
         'assignee WAS currentUser() ON -1d AND status WAS "In Progress" ON -1d'
       );
     });

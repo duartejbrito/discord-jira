@@ -76,10 +76,10 @@ describe("Jira Utils", () => {
   describe("JQL Query Construction", () => {
     it("should construct default JQL query", () => {
       const defaultJql =
-        'assignee WAS currentUser() ON -1d AND status WAS "In Progress" ON -1d';
+        "assignee WAS currentUser() ON -1d AND status WAS \"In Progress\" ON -1d";
 
       expect(defaultJql).toContain("assignee WAS currentUser()");
-      expect(defaultJql).toContain('status WAS "In Progress"');
+      expect(defaultJql).toContain("status WAS \"In Progress\"");
     });
 
     it("should handle custom JQL queries", () => {

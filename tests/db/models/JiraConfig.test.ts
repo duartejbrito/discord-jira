@@ -68,7 +68,7 @@ describe("JiraConfig Model", () => {
       schedulePaused: false,
     };
 
-    await expect(JiraConfig.create(configData as any)).rejects.toThrow();
+    await expect(JiraConfig.create(configData as never)).rejects.toThrow();
   });
 
   it("should require host field", async () => {
@@ -80,7 +80,7 @@ describe("JiraConfig Model", () => {
       schedulePaused: false,
     };
 
-    await expect(JiraConfig.create(configData as any)).rejects.toThrow();
+    await expect(JiraConfig.create(configData as never)).rejects.toThrow();
   });
 
   it("should require username field", async () => {
@@ -92,7 +92,7 @@ describe("JiraConfig Model", () => {
       schedulePaused: false,
     };
 
-    await expect(JiraConfig.create(configData as any)).rejects.toThrow();
+    await expect(JiraConfig.create(configData as never)).rejects.toThrow();
   });
 
   it("should require token field", async () => {
@@ -104,7 +104,7 @@ describe("JiraConfig Model", () => {
       schedulePaused: false,
     };
 
-    await expect(JiraConfig.create(configData as any)).rejects.toThrow();
+    await expect(JiraConfig.create(configData as never)).rejects.toThrow();
   });
 
   it("should find config by guildId", async () => {

@@ -101,7 +101,7 @@ describe("ConfigService", () => {
     });
 
     it("should get owner user ID", () => {
-      process.env.OWNER_USER_ID = "owner-456";
+      process.env.OWNER_ID = "owner-456";
 
       const result = configService.getOwnerUserId();
 

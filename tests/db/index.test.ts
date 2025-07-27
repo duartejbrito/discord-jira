@@ -1,28 +1,27 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { ServiceContainer } from "../../src/services/ServiceContainer";
 import { createMockServiceContainer } from "../test-utils";
 
-// Mock the config
-jest.mock("../../src/config", () => ({
-  config: {
-    PG_CONNECTION_STRING: "postgresql://test:test@localhost:5432/testdb",
-    PG_LOGGING: true,
-  },
-}));
+// Mock the ServiceContainer and ConfigService
+jest.mock("../../src/services/ServiceContainer");
 
 // Mock Sequelize constructor
-let capturedLoggingFunction: ((...args: unknown[]) => void) | null = null;
+// eslint-disable-next-line no-unused-vars
+type LoggingFunction = (sql: string, timing?: number) => void;
+let capturedLoggingFunction: LoggingFunction | null = null;
 
 const mockSequelizeInstance = {
   authenticate: jest.fn(),
   close: jest.fn(),
   sync: jest.fn(),
+  getDialect: jest.fn(),
 };
 
 const MockedSequelize = jest.fn(
   (connectionString: string, options: { logging?: unknown }) => {
     // Capture the logging function when Sequelize is instantiated
     if (options.logging && typeof options.logging === "function") {
-      capturedLoggingFunction = options.logging as (...args: unknown[]) => void;
+      capturedLoggingFunction = options.logging as LoggingFunction;
     }
     return mockSequelizeInstance;
   }
@@ -55,6 +54,15 @@ describe("db/index", () => {
 
     // Mock the ServiceContainer.getInstance method
     (ServiceContainer.getInstance as jest.Mock).mockReturnValue(mockContainer);
+    (ServiceContainer.initializeServices as jest.Mock).mockReturnValue(
+      mockContainer
+    );
+
+    // Setup mock config service responses
+    mockServices.IConfigService.getPgConnectionString.mockReturnValue(
+      "postgresql://test:test@localhost:5432/testdb"
+    );
+    mockServices.IConfigService.isPgLoggingEnabled.mockReturnValue(true);
 
     consoleDebugSpy = jest.spyOn(console, "debug").mockImplementation();
   });
@@ -68,6 +76,9 @@ describe("db/index", () => {
       // Import after mocks are set up
       const { default: db } = await import("../../src/db/index");
 
+      // Access a property to trigger lazy initialization
+      const dialect = db.getDialect;
+
       expect(MockedSequelize).toHaveBeenCalledWith(
         "postgresql://test:test@localhost:5432/testdb",
         {
@@ -76,13 +87,16 @@ describe("db/index", () => {
           logging: expect.any(Function),
         }
       );
-      expect(db).toBe(mockSequelizeInstance);
+      expect(dialect).toBeDefined();
     });
 
     it("should export the database instance", async () => {
       const { default: db } = await import("../../src/db/index");
       expect(db).toBeDefined();
-      expect(db).toBe(mockSequelizeInstance);
+
+      // Access a property to trigger lazy initialization
+      const authenticate = db.authenticate;
+      expect(authenticate).toBeDefined();
     });
   });
 
@@ -174,7 +188,7 @@ describe("db/index", () => {
       expect(capturedLoggingFunction).toBeDefined();
 
       const testSql = "DELETE FROM test_table";
-      const testTiming = null;
+      const testTiming = undefined;
 
       capturedLoggingFunction!(testSql, testTiming);
 

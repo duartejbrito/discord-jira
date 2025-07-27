@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 import { MessageFlags } from "discord.js";
 import { execute } from "../../src/commands/deploy";
-import { config } from "../../src/config";
 import { deployCommands, deployGuildCommands } from "../../src/deploy-commands";
 import { ServiceContainer } from "../../src/services/ServiceContainer";
 import {
@@ -9,11 +9,9 @@ import {
 } from "../test-utils";
 
 // Mock dependencies
-jest.mock("../../src/config");
 jest.mock("../../src/deploy-commands");
 jest.mock("../../src/services/ServiceContainer");
 
-const mockConfig = config as jest.Mocked<typeof config>;
 const mockDeployCommands = deployCommands as jest.MockedFunction<
   typeof deployCommands
 >;
@@ -48,7 +46,8 @@ describe("Deploy Command", () => {
   });
 
   it("should deploy commands when user is owner", async () => {
-    mockConfig.OWNER_ID = "owner123";
+    mockServices.IConfigService.getOwnerUserId.mockReturnValue("owner123");
+    mockServices.IConfigService.getOwnerGuildId.mockReturnValue("guild123");
 
     await execute(mockInteraction);
 
@@ -67,7 +66,9 @@ describe("Deploy Command", () => {
   });
 
   it("should deny access when user is not owner", async () => {
-    mockConfig.OWNER_ID = "differentowner";
+    mockServices.IConfigService.getOwnerUserId.mockReturnValue(
+      "differentowner"
+    );
 
     await execute(mockInteraction);
 
@@ -80,14 +81,14 @@ describe("Deploy Command", () => {
   });
 
   it("should handle deployment errors", async () => {
-    mockConfig.OWNER_ID = "owner123";
+    mockServices.IConfigService.getOwnerUserId.mockReturnValue("owner123");
     mockDeployCommands.mockRejectedValue(new Error("Deployment failed"));
 
     await expect(execute(mockInteraction)).rejects.toThrow("Deployment failed");
   });
 
   it("should handle guild command deployment errors", async () => {
-    mockConfig.OWNER_ID = "owner123";
+    mockServices.IConfigService.getOwnerUserId.mockReturnValue("owner123");
     mockDeployCommands.mockResolvedValue(undefined);
     mockDeployGuildCommands.mockRejectedValue(
       new Error("Guild deployment failed")
@@ -99,7 +100,7 @@ describe("Deploy Command", () => {
   });
 
   it("should handle service container errors", async () => {
-    mockConfig.OWNER_ID = "owner123";
+    mockServices.IConfigService.getOwnerUserId.mockReturnValue("owner123");
     (ServiceContainer.getInstance as jest.Mock).mockImplementation(() => {
       throw new Error("Service container not initialized");
     });

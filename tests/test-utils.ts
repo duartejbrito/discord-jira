@@ -131,6 +131,19 @@ export function createMockIConfigService() {
     get: jest.fn(),
     getRequired: jest.fn(),
     getInstance: jest.fn(),
+    getDiscordToken: jest.fn(),
+    getDiscordClientId: jest.fn(),
+    getClientId: jest.fn(),
+    getOwnerUserId: jest.fn(),
+    getOwnerGuildId: jest.fn(),
+    getOwnerLogChannelId: jest.fn(),
+    getDatabaseUrl: jest.fn(),
+    getPgConnectionString: jest.fn(),
+    isDiscordLoggingEnabled: jest.fn(),
+    isPgLoggingEnabled: jest.fn(),
+    isProduction: jest.fn(),
+    isDevelopment: jest.fn(),
+    isTest: jest.fn(),
   };
 }
 

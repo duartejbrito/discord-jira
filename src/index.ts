@@ -1,10 +1,9 @@
 import { Client, Events, GatewayIntentBits, MessageFlags } from "discord.js";
 import { allCommands } from "./commands";
-import { config } from "./config";
 import { initModels } from "./db/models";
 import { deployCommands, deployGuildCommands } from "./deploy-commands";
 import { initScheduledJobs } from "./scheduler";
-import { ILoggerService } from "./services/interfaces";
+import { IConfigService, ILoggerService } from "./services/interfaces";
 import { ServiceContainer } from "./services/ServiceContainer";
 
 export const client = new Client({
@@ -15,12 +14,13 @@ client.once(Events.ClientReady, async () => {
   // Initialize services
   const container = ServiceContainer.initializeServices();
   const loggerService = container.get<ILoggerService>("ILoggerService");
+  const configService = container.get<IConfigService>("IConfigService");
 
   // Initialize logger with Discord client
   loggerService.initialize(
     client,
-    config.OWNER_LOG_CHANNEL_ID!,
-    config.DISCORD_LOGGING
+    configService.getOwnerLogChannelId()!,
+    configService.isDiscordLoggingEnabled()
   );
 
   // Keep the old initLogger for backward compatibility (now it's a no-op)
@@ -35,7 +35,10 @@ client.once(Events.ClientReady, async () => {
 });
 
 client.on(Events.GuildCreate, async (guild) => {
-  if (guild.id === config.OWNER_GUILD_ID) {
+  const container = ServiceContainer.getInstance();
+  const configService = container.get<IConfigService>("IConfigService");
+
+  if (guild.id === configService.getOwnerGuildId()) {
     await deployCommands();
     await deployGuildCommands();
   }
@@ -72,4 +75,11 @@ client.on(Events.InteractionCreate, async (interaction) => {
   }
 });
 
-client.login(config.DISCORD_TOKEN);
+// Initialize config service and login
+function initializeAndLogin() {
+  const container = ServiceContainer.initializeServices();
+  const configService = container.get<IConfigService>("IConfigService");
+  return client.login(configService.getDiscordToken());
+}
+
+initializeAndLogin();

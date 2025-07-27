@@ -5,9 +5,8 @@ import {
   SlashCommandBuilder,
   MessageFlags,
 } from "discord.js";
-import { config } from "../config";
 import { deployCommands, deployGuildCommands } from "../deploy-commands";
-import { ILoggerService } from "../services/interfaces";
+import { IConfigService, ILoggerService } from "../services/interfaces";
 import { ServiceContainer } from "../services/ServiceContainer";
 import { commandsData, ownerCommandsData } from ".";
 
@@ -20,7 +19,10 @@ export const data = new SlashCommandBuilder()
   .setDefaultMemberPermissions(PermissionFlagsBits.Administrator);
 
 export async function execute(interaction: CommandInteraction) {
-  if (interaction.user.id !== config.OWNER_ID) {
+  const container = ServiceContainer.getInstance();
+  const configService = container.get<IConfigService>("IConfigService");
+
+  if (interaction.user.id !== configService.getOwnerUserId()) {
     return await interaction.reply({
       content: "You do not have permission to use this command.",
       flags: MessageFlags.Ephemeral,
@@ -35,9 +37,9 @@ export async function execute(interaction: CommandInteraction) {
       content: `Commands globally deployed:\n${commandsData
         .filter((d) => d && d.name)
         .map((d) => `/${d.name}`)
-        .join("\n")}\nCommands deployed for guild ${
-        config.OWNER_GUILD_ID
-      }\n${ownerCommandsData
+        .join(
+          "\n"
+        )}\nCommands deployed for guild ${configService.getOwnerGuildId()}\n${ownerCommandsData
         .filter((d) => d && d.name)
         .map((d) => `/${d.name}`)
         .join("\n")}`,
@@ -45,7 +47,6 @@ export async function execute(interaction: CommandInteraction) {
     })
     .then(() => setTimeout(() => interaction.deleteReply(), 60000));
 
-  const container = ServiceContainer.getInstance();
   const loggerService = container.get<ILoggerService>("ILoggerService");
   loggerService.logInfo("Deploy command executed", {
     GuildId: interaction.guildId!,

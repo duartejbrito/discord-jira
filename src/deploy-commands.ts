@@ -1,16 +1,33 @@
 import { REST, Routes } from "discord.js";
 import { commandsData, ownerCommandsData } from "./commands";
-import { config } from "./config";
-import { ILoggerService } from "./services/interfaces";
+import { IConfigService, ILoggerService } from "./services/interfaces";
 import { ServiceContainer } from "./services/ServiceContainer";
 
-const rest = new REST({ version: "10" }).setToken(config.DISCORD_TOKEN);
+// Function to get initialized services
+function getServices() {
+  ServiceContainer.initializeServices();
+  const container = ServiceContainer.getInstance();
+  const configService = container.get<IConfigService>("IConfigService");
+  return { container, configService };
+}
+
+// Initialize REST client
+function getRestClient(): REST {
+  const { configService } = getServices();
+  return new REST({ version: "10" }).setToken(configService.getDiscordToken());
+}
 
 export async function deployCommands() {
   try {
-    await rest.put(Routes.applicationCommands(config.DISCORD_CLIENT_ID), {
-      body: commandsData,
-    });
+    const { configService } = getServices();
+    const rest = getRestClient();
+
+    await rest.put(
+      Routes.applicationCommands(configService.getDiscordClientId()),
+      {
+        body: commandsData,
+      }
+    );
 
     const container = ServiceContainer.getInstance();
     const loggerService = container.get<ILoggerService>("ILoggerService");
@@ -26,10 +43,13 @@ export async function deployCommands() {
 
 export async function deployGuildCommands() {
   try {
+    const { configService } = getServices();
+    const rest = getRestClient();
+
     await rest.put(
       Routes.applicationGuildCommands(
-        config.DISCORD_CLIENT_ID,
-        config.OWNER_GUILD_ID!
+        configService.getDiscordClientId(),
+        configService.getOwnerGuildId()!
       ),
       {
         body: ownerCommandsData,
@@ -39,7 +59,7 @@ export async function deployGuildCommands() {
     const container = ServiceContainer.getInstance();
     const loggerService = container.get<ILoggerService>("ILoggerService");
     loggerService.logInfo("Commands deployed", {
-      GuildId: config.OWNER_GUILD_ID!,
+      GuildId: configService.getOwnerGuildId()!,
       Commands: ownerCommandsData.map((d) => `/${d.name}`).join("\n"),
     });
   } catch (error) {

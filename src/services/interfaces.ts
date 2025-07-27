@@ -52,10 +52,15 @@ export interface IConfigService {
 
   // Utility methods for common config values
   getDiscordToken(): string;
+  getDiscordClientId(): string;
   getClientId(): string;
   getOwnerUserId(): string;
   getOwnerGuildId(): string;
+  getOwnerLogChannelId(): string | undefined;
   getDatabaseUrl(): string;
+  getPgConnectionString(): string | undefined;
+  isDiscordLoggingEnabled(): boolean;
+  isPgLoggingEnabled(): boolean;
   isProduction(): boolean;
   isDevelopment(): boolean;
   isTest(): boolean;

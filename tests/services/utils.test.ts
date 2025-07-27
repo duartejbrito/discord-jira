@@ -152,8 +152,8 @@ describe("Refactored Utils Service", () => {
       });
 
       // Store the original function
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
       const originalSetup =
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
         require("../../src/services/utils").setupStringFormatExtension;
 
       // Call setup - should not override existing format method

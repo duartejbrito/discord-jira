@@ -125,7 +125,8 @@ describe("Refactored Utils Service", () => {
     });
 
     it("should format using prototype method", () => {
-      const result = "Hello {0}!".format("World");
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const result = ("Hello {0}!" as any).format("World");
 
       expect(result).toBe("Hello World!");
     });
@@ -138,6 +139,33 @@ describe("Refactored Utils Service", () => {
 
       expect(descriptor?.configurable).toBe(true);
       expect(descriptor?.enumerable).toBe(false);
+    });
+
+    it("should not override existing format method", () => {
+      // Create an existing format method first
+      const existingFormat = jest.fn();
+      Object.defineProperty(String.prototype, "format", {
+        value: existingFormat,
+        enumerable: false,
+        configurable: true,
+        writable: true,
+      });
+
+      // Store the original function
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const originalSetup =
+        require("../../src/services/utils").setupStringFormatExtension;
+
+      // Call setup - should not override existing format method
+      originalSetup();
+
+      // The existing format method should still be there (not overridden)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      expect((String.prototype as any).format).toBe(existingFormat);
+
+      // Clean up by removing the format method
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      delete (String.prototype as any).format;
     });
   });
 });

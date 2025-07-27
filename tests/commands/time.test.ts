@@ -46,7 +46,7 @@ jest.mock("../../src/services/utils", () => ({
     (seconds: number) =>
       `${Math.floor(seconds / 3600)}h ${Math.floor((seconds % 3600) / 60)}m`
   ),
-  distributeTime: jest.fn((total: number, count: number, method: string) =>
+  distributeTime: jest.fn((total: number, count: number) =>
     new Array(count).fill(Math.floor(total / count))
   ),
 }));
@@ -466,6 +466,27 @@ describe("Time Command", () => {
         "end",
         expect.any(Function)
       );
+    });
+
+    it("should handle collector timeout with no interactions", async () => {
+      const mockResponse = {
+        ok: true,
+        status: 200,
+        json: jest.fn().mockResolvedValue({
+          total: 0,
+          issues: [],
+        }),
+      };
+
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue(mockResponse);
+
+      await execute(mockInteraction);
+
+      // When no issues are found, it should reply with "didn't work on any issues"
+      expect(mockInteraction.editReply).toHaveBeenCalledWith({
+        content: expect.stringContaining("didn't work on any issues"),
+        flags: MessageFlags.Ephemeral,
+      });
     });
   });
 });

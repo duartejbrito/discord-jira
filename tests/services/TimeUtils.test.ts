@@ -151,5 +151,52 @@ describe("TimeUtils", () => {
         600
       );
     });
+
+    it("should handle edge case with very small total seconds", () => {
+      const result: TimeDistribution = TimeUtils.distributeTimeFairly(300, 2);
+
+      expect(result.fairDistribution!.length).toBe(2);
+      expect(result.totalSeconds).toBe(300);
+      expect(result.fairDistribution!.reduce((sum, val) => sum + val, 0)).toBe(
+        300
+      );
+    });
+
+    it("should handle adjustment when total needs correction", () => {
+      // Create a scenario where the adjustment loop is triggered
+      const mockRandom = jest
+        .fn()
+        .mockReturnValueOnce(0.9) // Large first value
+        .mockReturnValueOnce(0.1); // Small second value
+
+      const result: TimeDistribution = TimeUtils.distributeTimeFairly(
+        900,
+        2,
+        mockRandom
+      );
+
+      expect(result.fairDistribution!.length).toBe(2);
+      expect(result.totalSeconds).toBe(900);
+      expect(result.fairDistribution!.reduce((sum, val) => sum + val, 0)).toBe(
+        900
+      );
+    });
+
+    it("should handle negative adjustment case", () => {
+      // This tests the negative diff branch in the adjustment loop
+      const mockRandom = jest.fn().mockReturnValue(1.0); // Always maximum values initially
+
+      const result: TimeDistribution = TimeUtils.distributeTimeFairly(
+        600,
+        3,
+        mockRandom
+      );
+
+      expect(result.fairDistribution!.length).toBe(3);
+      expect(result.totalSeconds).toBe(600);
+      expect(result.fairDistribution!.reduce((sum, val) => sum + val, 0)).toBe(
+        600
+      );
+    });
   });
 });

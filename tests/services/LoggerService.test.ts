@@ -223,6 +223,53 @@ describe("LoggerService", () => {
 
       expect(mockChannel.send).not.toHaveBeenCalled();
     });
+
+    it("should add fields to Discord embed when args are provided", async () => {
+      loggerService.initialize(mockClient, "123456789", true);
+
+      const testArgs = {
+        testKey: "testValue",
+        anotherKey: { nested: "object" },
+        emptyKey: null,
+      };
+
+      // eslint-disable-next-line @typescript-eslint/no-var-requires
+      const { EmbedBuilder } = require("discord.js");
+      const mockEmbedInstance = {
+        setColor: jest.fn().mockReturnThis(),
+        setTitle: jest.fn().mockReturnThis(),
+        setFooter: jest.fn().mockReturnThis(),
+        setTimestamp: jest.fn().mockReturnThis(),
+        addFields: jest.fn().mockReturnThis(),
+      };
+
+      EmbedBuilder.mockReturnValue(mockEmbedInstance);
+
+      loggerService.info("Test message with args", testArgs);
+
+      // Wait for async Discord logging
+      await new Promise((resolve) => setTimeout(resolve, 10));
+
+      expect(mockEmbedInstance.addFields).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({
+            name: "testKey",
+            value: JSON.stringify("testValue"),
+            inline: true,
+          }),
+          expect.objectContaining({
+            name: "anotherKey",
+            value: JSON.stringify({ nested: "object" }),
+            inline: true,
+          }),
+          expect.objectContaining({
+            name: "emptyKey",
+            value: " ",
+            inline: true,
+          }),
+        ])
+      );
+    });
   });
 
   describe("LogType enum", () => {

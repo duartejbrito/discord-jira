@@ -131,6 +131,108 @@ describe("ConfigService", () => {
 
       expect(result).toBe("sqlite:///custom.db");
     });
+
+    it("should get Discord client ID", () => {
+      const testClientId = "discord-client-123";
+      setEnv("DISCORD_CLIENT_ID", testClientId);
+
+      const result = configService.getDiscordClientId();
+
+      expect(result).toBe(testClientId);
+    });
+
+    it("should get owner log channel ID", () => {
+      const testChannelId = "channel-123";
+      setEnv("OWNER_LOG_CHANNEL_ID", testChannelId);
+
+      const result = configService.getOwnerLogChannelId();
+
+      expect(result).toBe(testChannelId);
+    });
+
+    it("should return undefined for owner log channel ID when not set", () => {
+      deleteEnv("OWNER_LOG_CHANNEL_ID");
+
+      const result = configService.getOwnerLogChannelId();
+
+      expect(result).toBeUndefined();
+    });
+
+    it("should get PG connection string", () => {
+      const testConnectionString = "postgresql://user:pass@localhost:5432/db";
+      setEnv("PG_CONNECTION_STRING", testConnectionString);
+
+      const result = configService.getPgConnectionString();
+
+      expect(result).toBe(testConnectionString);
+    });
+
+    it("should return undefined for PG connection string when not set", () => {
+      deleteEnv("PG_CONNECTION_STRING");
+
+      const result = configService.getPgConnectionString();
+
+      expect(result).toBeUndefined();
+    });
+
+    it("should check Discord logging enabled", () => {
+      setEnv("DISCORD_LOGGING", "true");
+
+      const result = configService.isDiscordLoggingEnabled();
+
+      expect(result).toBe(true);
+    });
+
+    it("should check Discord logging disabled", () => {
+      setEnv("DISCORD_LOGGING", "false");
+
+      const result = configService.isDiscordLoggingEnabled();
+
+      expect(result).toBe(false);
+    });
+
+    it("should default Discord logging to false when not set", () => {
+      deleteEnv("DISCORD_LOGGING");
+
+      const result = configService.isDiscordLoggingEnabled();
+
+      expect(result).toBe(false);
+    });
+
+    it("should check PG logging enabled", () => {
+      setEnv("PG_LOGGING", "true");
+
+      const result = configService.isPgLoggingEnabled();
+
+      expect(result).toBe(true);
+    });
+
+    it("should check PG logging disabled", () => {
+      setEnv("PG_LOGGING", "false");
+
+      const result = configService.isPgLoggingEnabled();
+
+      expect(result).toBe(false);
+    });
+
+    it("should default PG logging to false when not set", () => {
+      deleteEnv("PG_LOGGING");
+
+      const result = configService.isPgLoggingEnabled();
+
+      expect(result).toBe(false);
+    });
+  });
+
+  describe("constructor singleton enforcement", () => {
+    it("should throw error when trying to create multiple instances", () => {
+      // First instance creation happens in beforeEach via getInstance()
+      expect(() => {
+        new ConfigService();
+      }).toThrow(
+        "ConfigService is a singleton and cannot be instantiated multiple times."
+      );
+    });
   });
 
   describe("environment detection", () => {

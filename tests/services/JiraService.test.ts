@@ -126,7 +126,7 @@ describe("JiraService", () => {
         expect.objectContaining({
           method: "POST",
           body: expect.stringContaining(
-            'assignee WAS currentUser() ON -1d AND status WAS \\"In Progress\\" ON -1d'
+            "assignee WAS currentUser() ON -1d AND status WAS \\\"In Progress\\\" ON -1d"
           ),
         })
       );

@@ -153,7 +153,7 @@ describe("LoggerService", () => {
       loggerService.info("Test message", { userId: 123, action: "test" });
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining('{"userId":123,"action":"test"}')
+        expect.stringContaining("{\"userId\":123,\"action\":\"test\"}")
       );
     });
   });

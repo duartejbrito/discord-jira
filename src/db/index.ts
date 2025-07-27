@@ -1,6 +1,6 @@
 import { Options, Sequelize } from "sequelize";
 import { config } from "../config";
-import { LoggerService } from "../services/LoggerService";
+import { ILoggerService } from "../services/interfaces";
 import { ServiceContainer } from "../services/ServiceContainer";
 
 const db: Sequelize = new Sequelize(config.PG_CONNECTION_STRING!, {
@@ -10,7 +10,7 @@ const db: Sequelize = new Sequelize(config.PG_CONNECTION_STRING!, {
     ? (sql, timing) => {
         try {
           const container = ServiceContainer.getInstance();
-          const loggerService = container.get<LoggerService>("LoggerService");
+          const loggerService = container.get<ILoggerService>("ILoggerService");
           loggerService.logDebug("[DB] Execution", {
             Timing: `${timing?.toString()}ms`,
             Sql: sql,

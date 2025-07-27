@@ -2,12 +2,13 @@ jest.mock("node-fetch");
 
 import fetch from "node-fetch";
 import { HttpService } from "../../src/services/HttpService";
+import { IHttpService } from "../../src/services/interfaces";
 import { createMockResponse } from "../test-utils";
 
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;
 
 describe("HttpService", () => {
-  let httpService: HttpService;
+  let httpService: IHttpService;
 
   beforeEach(() => {
     jest.clearAllMocks();

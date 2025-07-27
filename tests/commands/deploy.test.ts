@@ -58,7 +58,7 @@ describe("Deploy Command", () => {
       content: expect.stringContaining("Commands globally deployed"),
       flags: MessageFlags.Ephemeral,
     });
-    expect(mockServices.LoggerService.logInfo).toHaveBeenCalledWith(
+    expect(mockServices.ILoggerService.logInfo).toHaveBeenCalledWith(
       "Deploy command executed",
       {
         GuildId: "123456789",

@@ -18,7 +18,7 @@ export enum LogType {
 }
 
 export class LoggerService implements ILoggerService {
-  private static instance: LoggerService;
+  private static instance: ILoggerService;
   private logChannel: SendableChannels | null = null;
   private client: any = null;
   private discordLogging = false;
@@ -28,7 +28,7 @@ export class LoggerService implements ILoggerService {
     // Private constructor for singleton
   }
 
-  static getInstance(): LoggerService {
+  static getInstance(): ILoggerService {
     if (!LoggerService.instance) {
       LoggerService.instance = new LoggerService();
     }

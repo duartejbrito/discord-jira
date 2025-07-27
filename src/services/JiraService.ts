@@ -1,12 +1,24 @@
 import { Response } from "node-fetch";
-import { IHttpService } from "./interfaces";
+import { IHttpService, IJiraService } from "./interfaces";
+import { ServiceContainer } from "./ServiceContainer";
 
-export class JiraService {
+export class JiraService implements IJiraService {
   private readonly version = "3";
   private readonly restUrl = `/rest/api/${this.version}`;
 
+  private static instance: IJiraService;
+
   // eslint-disable-next-line no-unused-vars
   constructor(private httpService: IHttpService) {}
+
+  static getInstance(): IJiraService {
+    if (!JiraService.instance) {
+      JiraService.instance = new JiraService(
+        ServiceContainer.getInstance().get<IHttpService>("IHttpService")
+      );
+    }
+    return JiraService.instance;
+  }
 
   private getHeaders(username: string, token: string): Record<string, string> {
     return {

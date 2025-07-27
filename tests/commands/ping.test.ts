@@ -52,7 +52,7 @@ describe("ping command", () => {
       await execute(mockInteraction);
 
       testAssertions.expectServiceCall(
-        mockServices.LoggerService,
+        mockServices.ILoggerService,
         "logInfo",
         "Executing ping command",
         {
@@ -85,7 +85,7 @@ describe("ping command", () => {
       await execute(mockInteraction);
 
       expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content: "❌ Error: Unknown service: LoggerService",
+        content: "❌ Error: Unknown service: ILoggerService",
         flags: MessageFlags.Ephemeral,
       });
     });

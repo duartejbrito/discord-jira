@@ -86,11 +86,19 @@ describe("Time Command", () => {
 
   describe("when user has no configuration", () => {
     beforeEach(() => {
+      // Mock the current date to be Tuesday, July 29, 2025
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date("2025-07-29T10:00:00.000Z"));
+
       (mockInteraction.options.get as jest.Mock)
         .mockReturnValueOnce({ value: 1 }) // days-ago
         .mockReturnValueOnce(null); // hours (optional)
 
       mockJiraConfig.findOne.mockResolvedValue(null);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
     });
 
     it("should defer reply on start", async () => {
@@ -121,14 +129,9 @@ describe("Time Command", () => {
 
   describe("when checking weekend", () => {
     beforeEach(() => {
-      // Mock to make the target date a Sunday (day 0)
-      const mockDate = new Date("2025-07-27"); // This is a Sunday
-      jest.spyOn(global, "Date").mockImplementation(((...args: any[]) => {
-        if (args.length === 0) {
-          return mockDate;
-        }
-        return new (jest.requireActual("Date"))(...args);
-      }) as any);
+      // Mock the current date to be Sunday, July 27, 2025
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date("2025-07-27T10:00:00.000Z"));
 
       (mockInteraction.options.get as jest.Mock)
         .mockReturnValueOnce({ value: 1 }) // days-ago
@@ -136,7 +139,7 @@ describe("Time Command", () => {
     });
 
     afterEach(() => {
-      jest.restoreAllMocks();
+      jest.useRealTimers();
     });
 
     it("should reject weekend work checking", async () => {
@@ -160,6 +163,10 @@ describe("Time Command", () => {
     };
 
     beforeEach(() => {
+      // Mock the current date to be Tuesday, July 29, 2025
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date("2025-07-29T10:00:00.000Z"));
+
       (mockInteraction.options.get as jest.Mock)
         .mockReturnValueOnce({ value: 1 }) // days-ago
         .mockReturnValueOnce({ value: 8 }); // hours
@@ -167,8 +174,12 @@ describe("Time Command", () => {
       mockJiraConfig.findOne.mockResolvedValue(mockConfig as any);
     });
 
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it("should show progress message", async () => {
-      mockServices.JiraService.getIssuesWorked.mockResolvedValue({
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({ total: 0, issues: [] }),
       });
@@ -184,14 +195,14 @@ describe("Time Command", () => {
     });
 
     it("should use default JQL when no override", async () => {
-      mockServices.JiraService.getIssuesWorked.mockResolvedValue({
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({ total: 0, issues: [] }),
       });
 
       await execute(mockInteraction);
 
-      expect(mockServices.JiraService.getIssuesWorked).toHaveBeenCalledWith(
+      expect(mockServices.IJiraService.getIssuesWorked).toHaveBeenCalledWith(
         "https://test.atlassian.net",
         "testuser@example.com",
         "test-token",
@@ -206,14 +217,14 @@ describe("Time Command", () => {
       };
       mockJiraConfig.findOne.mockResolvedValue(configWithJql as any);
 
-      mockServices.JiraService.getIssuesWorked.mockResolvedValue({
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({ total: 0, issues: [] }),
       });
 
       await execute(mockInteraction);
 
-      expect(mockServices.JiraService.getIssuesWorked).toHaveBeenCalledWith(
+      expect(mockServices.IJiraService.getIssuesWorked).toHaveBeenCalledWith(
         "https://test.atlassian.net",
         "testuser@example.com",
         "test-token",
@@ -222,7 +233,7 @@ describe("Time Command", () => {
     });
 
     it("should handle no issues found", async () => {
-      mockServices.JiraService.getIssuesWorked.mockResolvedValue({
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({ total: 0, issues: [] }),
       });
@@ -259,23 +270,23 @@ describe("Time Command", () => {
         ],
       };
 
-      mockServices.JiraService.getIssuesWorked.mockResolvedValue({
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({ total: 1, issues: mockIssues }),
       });
 
-      mockServices.JiraService.getIssueWorklog.mockResolvedValue({
+      mockServices.IJiraService.getIssueWorklog.mockResolvedValue({
         json: jest.fn().mockResolvedValue(mockWorklogs),
       });
 
       await execute(mockInteraction);
 
-      expect(mockServices.JiraService.getIssueWorklog).toHaveBeenCalledWith(
+      expect(mockServices.IJiraService.getIssueWorklog).toHaveBeenCalledWith(
         "https://test.atlassian.net",
         "testuser@example.com",
         "test-token",
         "TEST-1",
-        expect.any(Date)
+        new Date("2025-07-28T10:00:00.000Z")
       );
 
       expect(mockInteraction.editReply).toHaveBeenCalledWith(
@@ -302,12 +313,12 @@ describe("Time Command", () => {
         worklogs: [],
       };
 
-      mockServices.JiraService.getIssuesWorked.mockResolvedValue({
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({ total: 1, issues: mockIssues }),
       });
 
-      mockServices.JiraService.getIssueWorklog.mockResolvedValue({
+      mockServices.IJiraService.getIssueWorklog.mockResolvedValue({
         json: jest.fn().mockResolvedValue(mockWorklogs),
       });
 
@@ -333,20 +344,23 @@ describe("Time Command", () => {
     };
 
     beforeEach(() => {
-      // Mock a weekday
-      const today = new Date();
-      const daysToTuesday =
-        today.getDay() === 2 ? 1 : ((today.getDay() + 5) % 7) + 1;
+      // Mock the current date to be Tuesday, July 29, 2025
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date("2025-07-29T10:00:00.000Z"));
 
       (mockInteraction.options.get as jest.Mock)
-        .mockReturnValueOnce({ value: daysToTuesday })
-        .mockReturnValueOnce({ value: 8 });
+        .mockReturnValueOnce({ value: 1 }) // days-ago
+        .mockReturnValueOnce({ value: 8 }); // hours
 
       mockJiraConfig.findOne.mockResolvedValue(mockConfig as any);
     });
 
+    afterEach(() => {
+      jest.useRealTimers();
+    });
+
     it("should handle Jira API errors", async () => {
-      mockServices.JiraService.getIssuesWorked.mockResolvedValue({
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue({
         ok: false,
         statusText: "Unauthorized",
       });
@@ -387,11 +401,19 @@ describe("Time Command", () => {
     };
 
     beforeEach(() => {
+      // Mock the current date to be Tuesday, July 29, 2025
+      jest.useFakeTimers();
+      jest.setSystemTime(new Date("2025-07-29T10:00:00.000Z"));
+
       (mockInteraction.options.get as jest.Mock)
-        .mockReturnValueOnce({ value: 1 })
-        .mockReturnValueOnce({ value: 8 });
+        .mockReturnValueOnce({ value: 1 }) // days-ago
+        .mockReturnValueOnce({ value: 8 }); // hours
 
       mockJiraConfig.findOne.mockResolvedValue(mockConfig as any);
+    });
+
+    afterEach(() => {
+      jest.useRealTimers();
     });
 
     it("should setup message component collector for worklog submission", async () => {
@@ -408,12 +430,12 @@ describe("Time Command", () => {
 
       const mockWorklogs = { worklogs: [] };
 
-      mockServices.JiraService.getIssuesWorked.mockResolvedValue({
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue({ total: 1, issues: mockIssues }),
       });
 
-      mockServices.JiraService.getIssueWorklog.mockResolvedValue({
+      mockServices.IJiraService.getIssueWorklog.mockResolvedValue({
         json: jest.fn().mockResolvedValue(mockWorklogs),
       });
 

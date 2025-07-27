@@ -1,7 +1,8 @@
 import { ConfigService } from "../../src/services/ConfigService";
+import { IConfigService } from "../../src/services/interfaces";
 
 describe("ConfigService", () => {
-  let configService: ConfigService;
+  let configService: IConfigService;
   let originalEnv: NodeJS.ProcessEnv;
 
   // Helper function to set environment variables
@@ -18,7 +19,7 @@ describe("ConfigService", () => {
     // Store original environment
     originalEnv = { ...process.env };
 
-    // Get fresh instance
+    // Get fresh instance and cast to concrete class for testing specific methods
     configService = ConfigService.getInstance();
   });
 

@@ -150,7 +150,7 @@ describe("Scheduler", () => {
         issues: [],
       };
 
-      mockServices.JiraService.getIssuesWorked.mockResolvedValue({
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue(mockSearchResults),
       });
@@ -161,7 +161,7 @@ describe("Scheduler", () => {
       expect(JiraConfig.findAll).toHaveBeenCalledWith({
         where: { schedulePaused: false },
       });
-      expect(mockServices.JiraService.getIssuesWorked).toHaveBeenCalledWith(
+      expect(mockServices.IJiraService.getIssuesWorked).toHaveBeenCalledWith(
         "https://test.jira.com",
         "test@example.com",
         "token123",
@@ -193,7 +193,7 @@ describe("Scheduler", () => {
         issues: [],
       };
 
-      mockServices.JiraService.getIssuesWorked.mockResolvedValue({
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue(mockSearchResults),
       });
@@ -201,7 +201,7 @@ describe("Scheduler", () => {
       initScheduledJobs();
       await scheduledJobCallback();
 
-      expect(mockServices.JiraService.getIssuesWorked).toHaveBeenCalledWith(
+      expect(mockServices.IJiraService.getIssuesWorked).toHaveBeenCalledWith(
         "https://test.jira.com",
         "test@example.com",
         "token123",
@@ -226,7 +226,7 @@ describe("Scheduler", () => {
         JiraConfig as unknown as { findAll: jest.Mock }
       ).findAll.mockResolvedValue(mockConfigs);
 
-      mockServices.JiraService.getIssuesWorked.mockResolvedValue({
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue({
         ok: false,
         statusText: "Unauthorized",
       });
@@ -265,7 +265,7 @@ describe("Scheduler", () => {
         issues: [],
       };
 
-      mockServices.JiraService.getIssuesWorked.mockResolvedValue({
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue(mockSearchResults),
       });
@@ -273,7 +273,7 @@ describe("Scheduler", () => {
       initScheduledJobs();
       await scheduledJobCallback();
 
-      expect(mockServices.JiraService.getIssuesWorked).toHaveBeenCalled();
+      expect(mockServices.IJiraService.getIssuesWorked).toHaveBeenCalled();
       // Should continue to next config when no work found
     });
 
@@ -320,12 +320,12 @@ describe("Scheduler", () => {
         worklogs: [], // No existing worklogs
       };
 
-      mockServices.JiraService.getIssuesWorked.mockResolvedValue({
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue(mockSearchResults),
       });
 
-      mockServices.JiraService.getIssueWorklog.mockResolvedValue({
+      mockServices.IJiraService.getIssueWorklog.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue(mockWorklogs),
       });
@@ -333,8 +333,10 @@ describe("Scheduler", () => {
       initScheduledJobs();
       await scheduledJobCallback();
 
-      expect(mockServices.JiraService.getIssueWorklog).toHaveBeenCalledTimes(2);
-      expect(mockServices.JiraService.postWorklog).toHaveBeenCalledTimes(2);
+      expect(mockServices.IJiraService.getIssueWorklog).toHaveBeenCalledTimes(
+        2
+      );
+      expect(mockServices.IJiraService.postWorklog).toHaveBeenCalledTimes(2);
       expect(EmbedBuilder).toHaveBeenCalled();
     });
 
@@ -378,12 +380,12 @@ describe("Scheduler", () => {
         ],
       };
 
-      mockServices.JiraService.getIssuesWorked.mockResolvedValue({
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue(mockSearchResults),
       });
 
-      mockServices.JiraService.getIssueWorklog.mockResolvedValue({
+      mockServices.IJiraService.getIssueWorklog.mockResolvedValue({
         ok: true,
         json: jest.fn().mockResolvedValue(mockWorklogs),
       });
@@ -391,8 +393,10 @@ describe("Scheduler", () => {
       initScheduledJobs();
       await scheduledJobCallback();
 
-      expect(mockServices.JiraService.getIssueWorklog).toHaveBeenCalledTimes(1);
-      expect(mockServices.JiraService.postWorklog).not.toHaveBeenCalled(); // Should skip posting
+      expect(mockServices.IJiraService.getIssueWorklog).toHaveBeenCalledTimes(
+        1
+      );
+      expect(mockServices.IJiraService.postWorklog).not.toHaveBeenCalled(); // Should skip posting
     });
   });
 });

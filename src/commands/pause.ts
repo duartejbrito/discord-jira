@@ -5,7 +5,7 @@ import {
   MessageFlags,
 } from "discord.js";
 import { JiraConfig } from "../db/models";
-import { LoggerService } from "../services/LoggerService";
+import { ILoggerService } from "../services/interfaces";
 import { ServiceContainer } from "../services/ServiceContainer";
 
 export const name = "pause";
@@ -17,7 +17,7 @@ export const data = new SlashCommandBuilder()
 
 export async function execute(interaction: CommandInteraction) {
   const container = ServiceContainer.getInstance();
-  const loggerService = container.get<LoggerService>("LoggerService");
+  const loggerService = container.get<ILoggerService>("ILoggerService");
 
   loggerService.logInfo("Executing pause command", {
     GuildId: interaction.guildId,

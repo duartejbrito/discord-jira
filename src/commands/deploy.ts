@@ -7,7 +7,7 @@ import {
 } from "discord.js";
 import { config } from "../config";
 import { deployCommands, deployGuildCommands } from "../deploy-commands";
-import { LoggerService } from "../services/LoggerService";
+import { ILoggerService } from "../services/interfaces";
 import { ServiceContainer } from "../services/ServiceContainer";
 import { commandsData, ownerCommandsData } from ".";
 
@@ -46,7 +46,7 @@ export async function execute(interaction: CommandInteraction) {
     .then(() => setTimeout(() => interaction.deleteReply(), 60000));
 
   const container = ServiceContainer.getInstance();
-  const loggerService = container.get<LoggerService>("LoggerService");
+  const loggerService = container.get<ILoggerService>("ILoggerService");
   loggerService.logInfo("Deploy command executed", {
     GuildId: interaction.guildId!,
   });

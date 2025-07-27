@@ -4,7 +4,7 @@ import { config } from "./config";
 import { initModels } from "./db/models";
 import { deployCommands, deployGuildCommands } from "./deploy-commands";
 import { initScheduledJobs } from "./scheduler";
-import { LoggerService } from "./services/LoggerService";
+import { ILoggerService } from "./services/interfaces";
 import { ServiceContainer } from "./services/ServiceContainer";
 
 export const client = new Client({
@@ -14,7 +14,7 @@ export const client = new Client({
 client.once(Events.ClientReady, async () => {
   // Initialize services
   const container = ServiceContainer.initializeServices();
-  const loggerService = container.get<LoggerService>("LoggerService");
+  const loggerService = container.get<ILoggerService>("ILoggerService");
 
   // Initialize logger with Discord client
   loggerService.initialize(
@@ -54,7 +54,7 @@ client.on(Events.InteractionCreate, async (interaction) => {
       );
     } catch (error) {
       const container = ServiceContainer.getInstance();
-      const loggerService = container.get<LoggerService>("LoggerService");
+      const loggerService = container.get<ILoggerService>("ILoggerService");
       loggerService.logError(error as Error);
       const errorMessage = "There was an error while executing this command!";
       if (interaction.replied || interaction.deferred) {

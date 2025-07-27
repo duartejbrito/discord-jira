@@ -1,19 +1,20 @@
+import { IJiraService } from "../../src/services/interfaces";
 import { JiraService } from "../../src/services/JiraService";
 import {
-  createMockHttpService,
+  createMockIHttpService,
   createMockResponse,
   testDataFactory,
 } from "../test-utils";
 
 describe("JiraService", () => {
-  let jiraService: JiraService;
-  let mockHttpService: ReturnType<typeof createMockHttpService>;
+  let jiraService: IJiraService;
+  let mockHttpService: ReturnType<typeof createMockIHttpService>;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
     // Use test utilities for consistent mock setup
-    mockHttpService = createMockHttpService();
+    mockHttpService = createMockIHttpService();
     jiraService = new JiraService(mockHttpService);
   });
 

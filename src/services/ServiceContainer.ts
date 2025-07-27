@@ -1,6 +1,11 @@
 import { ConfigService } from "./ConfigService";
 import { HttpService } from "./HttpService";
-import { IHttpService, IConfigService, ILoggerService } from "./interfaces";
+import {
+  IHttpService,
+  IConfigService,
+  ILoggerService,
+  IJiraService,
+} from "./interfaces";
 import { JiraService } from "./JiraService";
 import { LoggerService } from "./LoggerService";
 
@@ -48,19 +53,19 @@ export class ServiceContainer {
 
     // Register Config service (no dependencies)
     const configService = ConfigService.getInstance();
-    container.register<IConfigService>("ConfigService", configService);
+    container.register<IConfigService>("IConfigService", configService);
 
     // Register Logger service (no dependencies - initialized later with Discord client)
     const loggerService = LoggerService.getInstance();
-    container.register<ILoggerService>("LoggerService", loggerService);
+    container.register<ILoggerService>("ILoggerService", loggerService);
 
     // Register HTTP service (no dependencies)
     const httpService = HttpService.getInstance();
-    container.register<IHttpService>("HttpService", httpService);
+    container.register<IHttpService>("IHttpService", httpService);
 
     // Register Jira service (depends on HTTP service)
-    const jiraService = new JiraService(httpService);
-    container.register<JiraService>("JiraService", jiraService);
+    const jiraService = JiraService.getInstance();
+    container.register<IJiraService>("IJiraService", jiraService);
 
     return container;
   }

@@ -18,10 +18,10 @@ export function createMockServiceContainer() {
   };
 
   const mockServices = {
-    LoggerService: createMockLoggerService(),
-    JiraService: createMockJiraService(),
-    HttpService: createMockHttpService(),
-    ConfigService: createMockConfigService(),
+    ILoggerService: createMockILoggerService(),
+    IJiraService: createMockIJiraService(),
+    IHttpService: createMockIHttpService(),
+    IConfigService: createMockIConfigService(),
     TimeUtils: createMockTimeUtils(),
   };
 
@@ -81,9 +81,9 @@ export function createMockInteraction(overrides: Partial<any> = {}): any {
 }
 
 /**
- * Creates a mock LoggerService
+ * Creates a mock ILoggerService
  */
-export function createMockLoggerService() {
+export function createMockILoggerService() {
   return {
     logInfo: jest.fn(),
     logWarn: jest.fn(),
@@ -95,9 +95,9 @@ export function createMockLoggerService() {
 }
 
 /**
- * Creates a mock JiraService
+ * Creates a mock IJiraService
  */
-export function createMockJiraService() {
+export function createMockIJiraService() {
   return {
     getServerInfo: jest.fn().mockResolvedValue({ ok: true }),
     getIssuesWorked: jest.fn().mockResolvedValue({ ok: true, data: [] }),
@@ -109,9 +109,9 @@ export function createMockJiraService() {
 }
 
 /**
- * Creates a mock HttpService
+ * Creates a mock IHttpService
  */
-export function createMockHttpService(): jest.Mocked<IHttpService> {
+export function createMockIHttpService(): jest.Mocked<IHttpService> {
   return {
     fetch: jest.fn().mockResolvedValue({
       ok: true,
@@ -124,9 +124,9 @@ export function createMockHttpService(): jest.Mocked<IHttpService> {
 }
 
 /**
- * Creates a mock ConfigService
+ * Creates a mock IConfigService
  */
-export function createMockConfigService() {
+export function createMockIConfigService() {
   return {
     get: jest.fn(),
     getRequired: jest.fn(),

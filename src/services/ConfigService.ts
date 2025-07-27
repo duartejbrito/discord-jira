@@ -1,9 +1,9 @@
 import { IConfigService } from "./interfaces";
 
 export class ConfigService implements IConfigService {
-  private static instance: ConfigService;
+  private static instance: IConfigService;
 
-  static getInstance(): ConfigService {
+  static getInstance(): IConfigService {
     if (!ConfigService.instance) {
       ConfigService.instance = new ConfigService();
     }

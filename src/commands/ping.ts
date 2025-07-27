@@ -4,7 +4,7 @@ import {
   SlashCommandBuilder,
   MessageFlags,
 } from "discord.js";
-import { LoggerService } from "../services/LoggerService";
+import { ILoggerService } from "../services/interfaces";
 import { ServiceContainer } from "../services/ServiceContainer";
 
 export const name = "ping";
@@ -17,7 +17,7 @@ export const data = new SlashCommandBuilder()
 export async function execute(interaction: CommandInteraction) {
   try {
     const container = ServiceContainer.getInstance();
-    const loggerService = container.get<LoggerService>("LoggerService");
+    const loggerService = container.get<ILoggerService>("ILoggerService");
 
     loggerService.logInfo("Executing ping command", {
       GuildId: interaction.guildId,

@@ -49,7 +49,7 @@ describe("Setup Command", () => {
         .mockReturnValueOnce({ value: "test-token" }) // token
         .mockReturnValueOnce({ value: "project = TEST" }); // jql
 
-      mockServices.JiraService.getServerInfo.mockResolvedValue({ ok: true });
+      mockServices.IJiraService.getServerInfo.mockResolvedValue({ ok: true });
 
       const mockConfig = {
         guildId: "123456789",
@@ -76,7 +76,7 @@ describe("Setup Command", () => {
     it("should validate Jira connection", async () => {
       await execute(mockInteraction);
 
-      expect(mockServices.JiraService.getServerInfo).toHaveBeenCalledWith(
+      expect(mockServices.IJiraService.getServerInfo).toHaveBeenCalledWith(
         "https://test.atlassian.net",
         "testuser@example.com",
         "test-token"
@@ -121,7 +121,7 @@ describe("Setup Command", () => {
         .mockReturnValueOnce({ value: "updated-token" }) // token
         .mockReturnValueOnce({ value: "project = UPDATED" }); // jql
 
-      mockServices.JiraService.getServerInfo.mockResolvedValue({ ok: true });
+      mockServices.IJiraService.getServerInfo.mockResolvedValue({ ok: true });
 
       const mockConfig = {
         guildId: "123456789",
@@ -166,7 +166,7 @@ describe("Setup Command", () => {
         .mockReturnValueOnce({ value: "test-token" }) // token
         .mockReturnValueOnce(null); // jql (optional)
 
-      mockServices.JiraService.getServerInfo.mockResolvedValue({ ok: true });
+      mockServices.IJiraService.getServerInfo.mockResolvedValue({ ok: true });
 
       const mockConfig = {
         guildId: "123456789",
@@ -213,7 +213,7 @@ describe("Setup Command", () => {
     });
 
     it("should handle Jira connection failure", async () => {
-      mockServices.JiraService.getServerInfo.mockResolvedValue({
+      mockServices.IJiraService.getServerInfo.mockResolvedValue({
         ok: false,
         statusText: "Unauthorized",
       });
@@ -241,7 +241,7 @@ describe("Setup Command", () => {
     });
 
     it("should handle database errors", async () => {
-      mockServices.JiraService.getServerInfo.mockResolvedValue({ ok: true });
+      mockServices.IJiraService.getServerInfo.mockResolvedValue({ ok: true });
       mockJiraConfig.findOrCreate.mockRejectedValue(
         new Error("Database error")
       );
@@ -250,7 +250,7 @@ describe("Setup Command", () => {
     });
 
     it("should handle save errors when updating configuration", async () => {
-      mockServices.JiraService.getServerInfo.mockResolvedValue({ ok: true });
+      mockServices.IJiraService.getServerInfo.mockResolvedValue({ ok: true });
 
       const mockConfig = {
         guildId: "123456789",

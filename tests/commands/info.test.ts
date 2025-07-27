@@ -55,7 +55,7 @@ describe("Info Command", () => {
     it("should log the command execution", async () => {
       await execute(mockInteraction);
 
-      expect(mockServices.LoggerService.logInfo).toHaveBeenCalledWith(
+      expect(mockServices.ILoggerService.logInfo).toHaveBeenCalledWith(
         "Executing info command",
         {
           GuildId: "123456789",
@@ -111,7 +111,7 @@ describe("Info Command", () => {
     it("should log the command execution", async () => {
       await execute(mockInteraction);
 
-      expect(mockServices.LoggerService.logInfo).toHaveBeenCalledWith(
+      expect(mockServices.ILoggerService.logInfo).toHaveBeenCalledWith(
         "Executing info command",
         {
           GuildId: "123456789",

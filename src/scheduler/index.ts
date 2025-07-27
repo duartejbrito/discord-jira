@@ -3,8 +3,7 @@ import * as schedule from "node-schedule";
 import { client } from "..";
 import { JiraConfig } from "../db/models";
 import { PageOfWorklogs, SearchResults } from "../jira/models";
-import { JiraService } from "../services/JiraService";
-import { LoggerService } from "../services/LoggerService";
+import { IJiraService, ILoggerService } from "../services/interfaces";
 import { ServiceContainer } from "../services/ServiceContainer";
 import { convertSeconds, distributeTime } from "../services/utils";
 
@@ -18,8 +17,8 @@ export const totalSeconds = hours * 3600;
 export function initScheduledJobs() {
   schedule.scheduleJob("daily-job", { rule: dailyRule, tz }, async () => {
     const container = ServiceContainer.getInstance();
-    const loggerService = container.get<LoggerService>("LoggerService");
-    const jiraService = container.get<JiraService>("JiraService");
+    const loggerService = container.get<ILoggerService>("ILoggerService");
+    const jiraService = container.get<IJiraService>("IJiraService");
     loggerService.logInfo("Running daily job...");
     const startDate = new Date();
     startDate.setDate(startDate.getDate() - (daysAgo as unknown as number));

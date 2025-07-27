@@ -6,7 +6,7 @@ import {
   MessageFlags,
 } from "discord.js";
 import { JiraConfig } from "../db/models";
-import { JiraService } from "../services/JiraService";
+import { IJiraService } from "../services/interfaces";
 import { ServiceContainer } from "../services/ServiceContainer";
 
 export const name = "setup";
@@ -50,7 +50,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const jql = interaction.options.get("jql", false);
 
   const serviceContainer = ServiceContainer.getInstance();
-  const jiraService = serviceContainer.get<JiraService>("JiraService");
+  const jiraService = serviceContainer.get<IJiraService>("IJiraService");
 
   const response = await jiraService.getServerInfo(
     host.value as string,

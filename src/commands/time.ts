@@ -16,7 +16,7 @@ import {
 import "../services/utils"; // Import to initialize String.prototype.format extension
 import { JiraConfig } from "../db/models";
 import { PageOfWorklogs, SearchResults } from "../jira/models";
-import { JiraService } from "../services/JiraService";
+import { IJiraService } from "../services/interfaces";
 import { ServiceContainer } from "../services/ServiceContainer";
 import { TimeUtils } from "../services/TimeUtils";
 
@@ -98,7 +98,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   }
 
   const serviceContainer = ServiceContainer.getInstance();
-  const jiraService = serviceContainer.get<JiraService>("JiraService");
+  const jiraService = serviceContainer.get<IJiraService>("IJiraService");
 
   const host = jiraConfig.host;
   const username = jiraConfig.username;

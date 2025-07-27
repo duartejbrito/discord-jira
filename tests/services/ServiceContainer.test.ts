@@ -40,11 +40,12 @@ describe("ServiceContainer", () => {
       const initializedContainer = ServiceContainer.initializeServices();
 
       // Should have registered HTTP service
-      const httpService = initializedContainer.get<IHttpService>("HttpService");
+      const httpService =
+        initializedContainer.get<IHttpService>("IHttpService");
       expect(httpService).toBeInstanceOf(HttpService);
 
       // Should have registered Jira service with HTTP dependency
-      const jiraService = initializedContainer.get<JiraService>("JiraService");
+      const jiraService = initializedContainer.get<JiraService>("IJiraService");
       expect(jiraService).toBeInstanceOf(JiraService);
     });
 
@@ -52,9 +53,9 @@ describe("ServiceContainer", () => {
       const initializedContainer = ServiceContainer.initializeServices();
 
       const httpService1 =
-        initializedContainer.get<IHttpService>("HttpService");
+        initializedContainer.get<IHttpService>("IHttpService");
       const httpService2 =
-        initializedContainer.get<IHttpService>("HttpService");
+        initializedContainer.get<IHttpService>("IHttpService");
 
       expect(httpService1).toBe(httpService2);
     });

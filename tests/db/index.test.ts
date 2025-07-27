@@ -101,8 +101,8 @@ describe("db/index", () => {
       capturedLoggingFunction!(testSql, testTiming);
 
       expect(ServiceContainer.getInstance).toHaveBeenCalled();
-      expect(mockContainer.get).toHaveBeenCalledWith("LoggerService");
-      expect(mockServices.LoggerService.logDebug).toHaveBeenCalledWith(
+      expect(mockContainer.get).toHaveBeenCalledWith("ILoggerService");
+      expect(mockServices.ILoggerService.logDebug).toHaveBeenCalledWith(
         "[DB] Execution",
         {
           Timing: "123ms",
@@ -146,7 +146,7 @@ describe("db/index", () => {
       capturedLoggingFunction!(testSql, testTiming);
 
       expect(ServiceContainer.getInstance).toHaveBeenCalled();
-      expect(mockContainer.get).toHaveBeenCalledWith("LoggerService");
+      expect(mockContainer.get).toHaveBeenCalledWith("ILoggerService");
       expect(consoleDebugSpy).toHaveBeenCalledWith("[DB] Execution", {
         Timing: "789ms",
         Sql: testSql,
@@ -161,7 +161,7 @@ describe("db/index", () => {
 
       capturedLoggingFunction!(testSql, testTiming);
 
-      expect(mockServices.LoggerService.logDebug).toHaveBeenCalledWith(
+      expect(mockServices.ILoggerService.logDebug).toHaveBeenCalledWith(
         "[DB] Execution",
         {
           Timing: "undefinedms",
@@ -178,7 +178,7 @@ describe("db/index", () => {
 
       capturedLoggingFunction!(testSql, testTiming);
 
-      expect(mockServices.LoggerService.logDebug).toHaveBeenCalledWith(
+      expect(mockServices.ILoggerService.logDebug).toHaveBeenCalledWith(
         "[DB] Execution",
         {
           Timing: "undefinedms",

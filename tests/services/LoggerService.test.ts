@@ -1,4 +1,5 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
+import { ILoggerService } from "../../src/services/interfaces";
 import { LoggerService, LogType } from "../../src/services/LoggerService";
 
 // Mock colors/safe
@@ -27,12 +28,13 @@ jest.mock("discord.js", () => ({
 }));
 
 describe("LoggerService", () => {
-  let loggerService: LoggerService;
+  let loggerService: ILoggerService;
   let mockClient: any;
   let mockChannel: any;
   let consoleSpy: jest.SpyInstance;
 
   beforeEach(() => {
+    // Cast to concrete class for testing specific methods
     loggerService = LoggerService.getInstance();
     consoleSpy = jest.spyOn(console, "log").mockImplementation();
 
@@ -144,7 +146,7 @@ describe("LoggerService", () => {
       loggerService.info("Test message", { userId: 123, action: "test" });
 
       expect(consoleSpy).toHaveBeenCalledWith(
-        expect.stringContaining("{\"userId\":123,\"action\":\"test\"}")
+        expect.stringContaining('{"userId":123,"action":"test"}')
       );
     });
   });

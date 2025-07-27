@@ -55,7 +55,7 @@ describe("Pause Command", () => {
     it("should log the command execution", async () => {
       await execute(mockInteraction);
 
-      expect(mockServices.LoggerService.logInfo).toHaveBeenCalledWith(
+      expect(mockServices.ILoggerService.logInfo).toHaveBeenCalledWith(
         "Executing pause command",
         {
           GuildId: "123456789",
@@ -108,7 +108,7 @@ describe("Pause Command", () => {
     it("should log the command execution", async () => {
       await execute(mockInteraction);
 
-      expect(mockServices.LoggerService.logInfo).toHaveBeenCalledWith(
+      expect(mockServices.ILoggerService.logInfo).toHaveBeenCalledWith(
         "Executing pause command",
         {
           GuildId: "123456789",

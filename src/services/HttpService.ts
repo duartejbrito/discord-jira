@@ -5,9 +5,9 @@ import fetch, {
 import { IHttpService } from "./interfaces";
 
 export class HttpService implements IHttpService {
-  private static instance: HttpService;
+  private static instance: IHttpService;
 
-  static getInstance(): HttpService {
+  static getInstance(): IHttpService {
     if (!HttpService.instance) {
       HttpService.instance = new HttpService();
     }

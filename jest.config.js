@@ -13,7 +13,7 @@ module.exports = {
     '!src/deploy-commands.ts', // Exclude deployment script
   ],
   coverageDirectory: 'coverage',
-  coverageReporters: ['text', 'lcov', 'html'],
+  coverageReporters: ['clover', 'json', 'lcov', 'text'],
   setupFilesAfterEnv: ['<rootDir>/tests/setup.ts'],
   setupFiles: ['<rootDir>/tests/global-setup.ts'],
   moduleFileExtensions: ['ts', 'js', 'json'],

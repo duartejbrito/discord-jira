@@ -21,4 +21,12 @@ module.exports = {
   moduleNameMapper: {
     '^node-fetch$': '<rootDir>/tests/__mocks__/node-fetch.ts'
   },
+  coverageThreshold: {
+    global: {
+      branches: 80,
+      functions: 80,
+      lines: 80,
+      statements: 80,
+    },
+  }
 };

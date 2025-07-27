@@ -44,7 +44,7 @@ jobs:
         id: coverage
         with:
           annotations: none
-          output: comment, report-markdown
+          output: report-markdown
       - name: Adding report markdown to step summary
         run: echo '${{ steps.coverage.outputs.report }}' >> $GITHUB_STEP_SUMMARY
       - uses: actions/upload-artifact@v4

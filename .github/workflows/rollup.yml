@@ -39,7 +39,6 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: "npm"
-      # - run: npm run test:ci 2>&1 | tee test_output.log
       - uses: ArtiomTr/jest-coverage-report-action@v2
         id: coverage
         with:

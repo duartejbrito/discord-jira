@@ -22,13 +22,14 @@ A powerful Discord bot that integrates with Jira to help you track and log work 
 
 ## 🚀 Commands
 
-| Command  | Description                     | Usage                                               |
-| -------- | ------------------------------- | --------------------------------------------------- |
-| `/setup` | Configure your Jira connection  | Set up host, username, token, and JQL query         |
-| `/time`  | View work and log time manually | Check work from X days ago and optionally log hours |
-| `/pause` | Pause/resume automatic logging  | Toggle scheduled time logging on/off                |
-| `/info`  | View your current configuration | Display your Jira setup and settings                |
-| `/ping`  | Check if the bot is responsive  | Simple health check command                         |
+| Command  | Description                       | Usage                                                    |
+| -------- | --------------------------------- | -------------------------------------------------------- |
+| `/setup` | Configure your Jira connection    | Set up host, username, token, JQL query, and daily hours |
+| `/time`  | View work and log time manually   | Check work from X days ago and optionally log hours      |
+| `/hours` | Configure daily hours for logging | Set number of hours to distribute across tickets daily   |
+| `/pause` | Pause/resume automatic logging    | Toggle scheduled time logging on/off                     |
+| `/info`  | View your current configuration   | Display your Jira setup and settings                     |
+| `/ping`  | Check if the bot is responsive    | Simple health check command                              |
 
 ## 📋 Prerequisites
 
@@ -141,15 +142,25 @@ docker run --env-file .env discord-jira
 The bot includes an automated scheduler that:
 
 - Runs Monday through Friday at 6:00 AM UTC
-- Automatically logs 8 hours to issues you worked on the previous day
+- Automatically logs your configured daily hours to issues you worked on the previous day
 - Distributes time proportionally across multiple issues
 - Can be paused/resumed per user with the `/pause` command
+- Daily hours can be configured per user (defaults to 8 hours)
+
+### Daily Hours Configuration
+
+Each user can configure their daily hours independently:
+
+- Use `/hours <number>` to set your daily hours (1-24)
+- Use `/setup` with the `daily-hours` parameter during initial configuration
+- The `/time` command uses your configured hours when hours are not explicitly specified
+- The scheduler automatically uses your configured hours for daily time logging
 
 Schedule configuration can be modified in `src/scheduler/index.ts`:
 
 ```typescript
 export const dailyRule = "0 6 * * 2-6"; // Cron format
-export const hours = 8; // Hours to log daily
+// Daily hours are now configured per user in the database
 ```
 
 ## 🏗️ Project Structure
@@ -221,6 +232,56 @@ npm run test:ci       # Run tests with coverage report
 ```
 
 Coverage reports are generated in the `coverage/` directory and include detailed HTML reports for easy review.
+
+## 💡 Usage Examples
+
+### Initial Setup
+
+```bash
+# Set up your Jira connection with custom daily hours
+/setup host:your-instance.atlassian.net username:your-email@company.com token:your-api-token daily-hours:6
+
+# Or set up with defaults (8 hours)
+/setup host:your-instance.atlassian.net username:your-email@company.com token:your-api-token
+```
+
+### Daily Hours Configuration
+
+```bash
+# Configure your daily hours to 6 hours
+/hours 6
+
+# Configure for part-time work (4 hours)
+/hours 4
+
+# Standard full-time (8 hours)
+/hours 8
+```
+
+### Time Tracking
+
+```bash
+# Check your work from yesterday and log time using your configured daily hours
+/time days-ago:1
+
+# Check work from 2 days ago and explicitly log 6 hours
+/time days-ago:2 hours:6
+
+# The scheduler will automatically use your configured daily hours
+```
+
+### Configuration Management
+
+```bash
+# View your current configuration including daily hours
+/info
+
+# Pause automatic logging
+/pause
+
+# Resume automatic logging
+/pause
+```
 
 ## 🤝 Contributing
 

@@ -39,6 +39,14 @@ export const data = new SlashCommandBuilder()
       .setName("jql")
       .setDescription("The JQL query to use for searching.")
       .setRequired(false)
+  )
+  .addIntegerOption((option) =>
+    option
+      .setName("daily-hours")
+      .setDescription("Daily hours to distribute across tickets (default: 8).")
+      .setMinValue(1)
+      .setMaxValue(24)
+      .setRequired(false)
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
@@ -48,6 +56,8 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   const username = interaction.options.get("username", true);
   const token = interaction.options.get("token", true);
   const jql = interaction.options.get("jql", false);
+  const dailyHours =
+    (interaction.options.get("daily-hours", false)?.value as number) ?? 8;
 
   const serviceContainer = ServiceContainer.getInstance();
   const jiraService = serviceContainer.get<IJiraService>("IJiraService");
@@ -79,6 +89,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       userId: interaction.user.id,
       timeJqlOverride: jql?.value as string | undefined,
       schedulePaused: false,
+      dailyHours: dailyHours,
     },
   });
 
@@ -87,6 +98,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     config.username = username.value as string;
     config.token = token.value as string;
     config.timeJqlOverride = jql?.value as string | undefined;
+    config.dailyHours = dailyHours;
     await config.save();
   }
 

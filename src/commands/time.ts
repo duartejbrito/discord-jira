@@ -64,7 +64,24 @@ export async function execute(interaction: ChatInputCommandInteraction) {
   await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
   const daysAgo = interaction.options.get("days-ago", true);
-  const hours = (interaction.options.get("hours", false)?.value as number) ?? 8;
+  const jiraConfig = await JiraConfig.findOne({
+    where: {
+      guildId: interaction.guildId!,
+      userId: interaction.user.id,
+    },
+  });
+
+  if (!jiraConfig) {
+    await replyOrFollowUp(interaction, {
+      content: "You need to setup your Jira configuration first.",
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  const hours =
+    (interaction.options.get("hours", false)?.value as number) ??
+    (jiraConfig.dailyHours || 8);
   const totalSeconds = hours * 3600;
 
   const startDate = new Date();
@@ -81,21 +98,6 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     content: `Checking your work for ${startDate.toDateString()}...`,
     flags: MessageFlags.Ephemeral,
   });
-
-  const jiraConfig = await JiraConfig.findOne({
-    where: {
-      guildId: interaction.guildId!,
-      userId: interaction.user.id,
-    },
-  });
-
-  if (!jiraConfig) {
-    await replyOrFollowUp(interaction, {
-      content: "You need to setup your Jira configuration first.",
-      flags: MessageFlags.Ephemeral,
-    });
-    return;
-  }
 
   const serviceContainer = ServiceContainer.getInstance();
   const jiraService = serviceContainer.get<IJiraService>("IJiraService");

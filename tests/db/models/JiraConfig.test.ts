@@ -31,6 +31,7 @@ describe("JiraConfig Model", () => {
       token: "testtoken",
       userId: "user123",
       schedulePaused: false,
+      dailyHours: 8,
     };
 
     const config = await JiraConfig.create(configData);
@@ -41,6 +42,7 @@ describe("JiraConfig Model", () => {
     expect(config.token).toBe(configData.token);
     expect(config.userId).toBe(configData.userId);
     expect(config.schedulePaused).toBe(configData.schedulePaused);
+    expect(config.dailyHours).toBe(configData.dailyHours);
   });
 
   it("should allow optional timeJqlOverride", async () => {
@@ -52,6 +54,7 @@ describe("JiraConfig Model", () => {
       userId: "user123",
       timeJqlOverride: "assignee = currentUser() AND updated >= -7d",
       schedulePaused: false,
+      dailyHours: 8,
     };
 
     const config = await JiraConfig.create(configData);
@@ -115,6 +118,7 @@ describe("JiraConfig Model", () => {
       token: "testtoken",
       userId: "user123",
       schedulePaused: false,
+      dailyHours: 8,
     };
 
     await JiraConfig.create(configData);
@@ -135,6 +139,7 @@ describe("JiraConfig Model", () => {
       token: "testtoken",
       userId: "user123",
       schedulePaused: false,
+      dailyHours: 8,
     };
 
     const config = await JiraConfig.create(configData);
@@ -147,5 +152,36 @@ describe("JiraConfig Model", () => {
     });
 
     expect(updatedConfig?.schedulePaused).toBe(true);
+  });
+
+  it("should have default dailyHours of 8", async () => {
+    const configData = {
+      guildId: "123456789",
+      host: "test.atlassian.net",
+      username: "testuser",
+      token: "testtoken",
+      userId: "user123",
+      schedulePaused: false,
+    };
+
+    const config = await JiraConfig.create(configData);
+
+    expect(config.dailyHours).toBe(8);
+  });
+
+  it("should allow custom dailyHours", async () => {
+    const configData = {
+      guildId: "123456789",
+      host: "test.atlassian.net",
+      username: "testuser",
+      token: "testtoken",
+      userId: "user123",
+      schedulePaused: false,
+      dailyHours: 6,
+    };
+
+    const config = await JiraConfig.create(configData);
+
+    expect(config.dailyHours).toBe(6);
   });
 });

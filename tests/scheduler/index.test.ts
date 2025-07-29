@@ -2,14 +2,7 @@ import { EmbedBuilder } from "discord.js";
 import * as schedule from "node-schedule";
 import { client } from "../../src";
 import { JiraConfig } from "../../src/db/models";
-import {
-  initScheduledJobs,
-  tz,
-  dailyRule,
-  daysAgo,
-  hours,
-  totalSeconds,
-} from "../../src/scheduler";
+import { initScheduledJobs, tz, dailyRule, daysAgo } from "../../src/scheduler";
 import { ServiceContainer } from "../../src/services/ServiceContainer";
 import { createMockServiceContainer } from "../test-utils";
 
@@ -53,8 +46,6 @@ describe("Scheduler", () => {
     expect(tz).toBe("Etc/UTC");
     expect(dailyRule).toBe("0 6 * * 2-6");
     expect(daysAgo).toBe("1");
-    expect(hours).toBe(8);
-    expect(totalSeconds).toBe(28800); // 8 * 3600
   });
 
   it("should initialize scheduled jobs", () => {
@@ -399,6 +390,162 @@ describe("Scheduler", () => {
         1
       );
       expect(mockServices.IJiraService.postWorklog).not.toHaveBeenCalled(); // Should skip posting
+    });
+
+    it("should use configured dailyHours for time distribution", async () => {
+      const mockConfigs = [
+        {
+          userId: "user1",
+          guildId: "guild1",
+          host: "https://test.jira.com",
+          username: "test@example.com",
+          token: "token123",
+          schedulePaused: false,
+          timeJqlOverride: null,
+          dailyHours: 6, // Custom 6 hours instead of default 8
+        },
+      ];
+
+      (
+        JiraConfig as unknown as { findAll: jest.Mock }
+      ).findAll.mockResolvedValue(mockConfigs);
+
+      const mockSearchResults = {
+        total: 2,
+        issues: [
+          {
+            id: "10001",
+            key: "TEST-1",
+            fields: {
+              summary: "Test Issue 1",
+              assignee: { displayName: "Test User" },
+            },
+          },
+          {
+            id: "10002",
+            key: "TEST-2",
+            fields: {
+              summary: "Test Issue 2",
+              assignee: { displayName: "Test User" },
+            },
+          },
+        ],
+      };
+
+      const mockWorklogs = {
+        worklogs: [], // No existing worklogs
+      };
+
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockSearchResults),
+      });
+
+      mockServices.IJiraService.getIssueWorklog.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockWorklogs),
+      });
+
+      mockServices.IJiraService.postWorklog.mockResolvedValue({
+        ok: true,
+      });
+
+      initScheduledJobs();
+      await scheduledJobCallback();
+
+      // With 6 hours configured, expect 6 * 3600 = 21600 seconds total
+      // Distributed fairly across 2 issues (not necessarily evenly due to randomness)
+      expect(mockServices.IJiraService.postWorklog).toHaveBeenCalledTimes(2);
+
+      // Get the actual call arguments to verify the total
+      const calls = mockServices.IJiraService.postWorklog.mock.calls;
+      const firstCallTime = calls[0][4]; // time parameter is the 5th argument (index 4)
+      const secondCallTime = calls[1][4];
+
+      // Verify the total time distributed equals the configured hours
+      expect(firstCallTime + secondCallTime).toBe(21600); // 6 hours = 21600 seconds
+
+      // Verify the calls were made with correct other parameters
+      expect(mockServices.IJiraService.postWorklog).toHaveBeenCalledWith(
+        "https://test.jira.com",
+        "test@example.com",
+        "token123",
+        "10001",
+        firstCallTime,
+        expect.any(Date)
+      );
+      expect(mockServices.IJiraService.postWorklog).toHaveBeenCalledWith(
+        "https://test.jira.com",
+        "test@example.com",
+        "token123",
+        "10002",
+        secondCallTime,
+        expect.any(Date)
+      );
+    });
+
+    it("should default to 8 hours when dailyHours is not set", async () => {
+      const mockConfigs = [
+        {
+          userId: "user1",
+          guildId: "guild1",
+          host: "https://test.jira.com",
+          username: "test@example.com",
+          token: "token123",
+          schedulePaused: false,
+          timeJqlOverride: null,
+          // dailyHours is undefined/null
+        },
+      ];
+
+      (
+        JiraConfig as unknown as { findAll: jest.Mock }
+      ).findAll.mockResolvedValue(mockConfigs);
+
+      const mockSearchResults = {
+        total: 1,
+        issues: [
+          {
+            id: "10001",
+            key: "TEST-1",
+            fields: {
+              summary: "Test Issue 1",
+              assignee: { displayName: "Test User" },
+            },
+          },
+        ],
+      };
+
+      const mockWorklogs = {
+        worklogs: [], // No existing worklogs
+      };
+
+      mockServices.IJiraService.getIssuesWorked.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockSearchResults),
+      });
+
+      mockServices.IJiraService.getIssueWorklog.mockResolvedValue({
+        ok: true,
+        json: jest.fn().mockResolvedValue(mockWorklogs),
+      });
+
+      mockServices.IJiraService.postWorklog.mockResolvedValue({
+        ok: true,
+      });
+
+      initScheduledJobs();
+      await scheduledJobCallback();
+
+      // With default 8 hours, expect 8 * 3600 = 28800 seconds for 1 issue
+      expect(mockServices.IJiraService.postWorklog).toHaveBeenCalledWith(
+        "https://test.jira.com",
+        "test@example.com",
+        "token123",
+        "10001",
+        28800, // 8 hours in seconds
+        expect.any(Date)
+      );
     });
   });
 });

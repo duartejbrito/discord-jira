@@ -315,6 +315,7 @@ export const testDataFactory = {
       userId: "user123",
       timeJqlOverride: null,
       schedulePaused: false,
+      dailyHours: 8,
       save: jest.fn().mockResolvedValue(undefined),
       ...overrides,
     };

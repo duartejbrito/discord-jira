@@ -8,6 +8,7 @@ export class JiraConfig extends Model<InferAttributes<JiraConfig>> {
   declare userId: string;
   declare timeJqlOverride?: string;
   declare schedulePaused: boolean;
+  declare dailyHours?: number;
 
   static initModel(sequelize: Sequelize): typeof JiraConfig {
     JiraConfig.init(
@@ -40,6 +41,11 @@ export class JiraConfig extends Model<InferAttributes<JiraConfig>> {
           type: DataTypes.BOOLEAN,
           allowNull: false,
           defaultValue: false,
+        },
+        dailyHours: {
+          type: DataTypes.INTEGER,
+          allowNull: false,
+          defaultValue: 8,
         },
       },
       {

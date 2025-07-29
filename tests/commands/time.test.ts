@@ -136,6 +136,18 @@ describe("Time Command", () => {
       (mockInteraction.options.get as jest.Mock)
         .mockReturnValueOnce({ value: 1 }) // days-ago
         .mockReturnValueOnce({ value: 8 }); // hours
+
+      // Provide a valid config so weekend check can happen
+      const mockConfig = {
+        guildId: "123456789",
+        userId: "user123",
+        host: "https://test.atlassian.net",
+        username: "testuser@example.com",
+        token: "token123",
+        timeJqlOverride: null,
+        dailyHours: 8,
+      };
+      mockJiraConfig.findOne.mockResolvedValue(mockConfig as any);
     });
 
     afterEach(() => {

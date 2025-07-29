@@ -35,7 +35,8 @@ export async function execute(interaction: CommandInteraction) {
 - Username: ${config.username}
 - Jira API Token: ${config.token}
 - Time JQL Override: ${config.timeJqlOverride}
-- Schedule Paused: ${config.schedulePaused ? "Yes" : "No"}`,
+- Schedule Paused: ${config.schedulePaused ? "Yes" : "No"}
+- Daily Hours: ${config.dailyHours || 8} hours`,
       flags: MessageFlags.Ephemeral,
     });
   } else {

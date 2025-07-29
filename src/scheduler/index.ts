@@ -11,8 +11,6 @@ export const tz = "Etc/UTC";
 export const dailyRule = "0 6 * * 2-6";
 // export const dailyRule = "* * * * *"; // For testing every minute
 export const daysAgo = "1";
-export const hours = 8;
-export const totalSeconds = hours * 3600;
 
 export function initScheduledJobs() {
   schedule.scheduleJob("daily-job", { rule: dailyRule, tz }, async () => {
@@ -102,6 +100,7 @@ export function initScheduledJobs() {
         timeInSeconds: number;
       }[] = [];
 
+      const totalSeconds = (config.dailyHours || 8) * 3600;
       const timeDistribution = distributeTime(
         totalSeconds,
         issues.length,

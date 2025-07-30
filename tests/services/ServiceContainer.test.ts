@@ -1,5 +1,4 @@
-import { HttpService } from "../../src/services/HttpService";
-import { IHttpService } from "../../src/services/interfaces";
+import { IHttpService, HttpService } from "../../src/services/HttpService";
 import { JiraService } from "../../src/services/JiraService";
 import { ServiceContainer } from "../../src/services/ServiceContainer";
 
@@ -71,8 +70,23 @@ describe("ServiceContainer", () => {
         }),
       };
 
-      // Register mock service
+      // Create a mock logger service
+      const mockLoggerService = {
+        info: jest.fn(),
+        warn: jest.fn(),
+        debug: jest.fn(),
+        error: jest.fn(),
+        initialize: jest.fn(),
+        logInfo: jest.fn(),
+        logWarn: jest.fn(),
+        logError: jest.fn(),
+        logDebug: jest.fn(),
+        getInstance: jest.fn(),
+      };
+
+      // Register mock services
       container.register<IHttpService>("HttpService", mockHttpService);
+      container.register("ILoggerService", mockLoggerService);
 
       // Create and register Jira service with mock dependency
       const jiraService = new JiraService(mockHttpService);
@@ -80,7 +94,11 @@ describe("ServiceContainer", () => {
 
       // Use the service - it should use the mocked HTTP service
       const retrievedJiraService = container.get<JiraService>("JiraService");
-      await retrievedJiraService.getServerInfo("test.com", "user", "token");
+      await retrievedJiraService.getServerInfo(
+        "test.com",
+        "user@example.com",
+        "validtoken123"
+      );
 
       // Verify the mock was called
       expect(mockHttpService.fetch).toHaveBeenCalledWith(

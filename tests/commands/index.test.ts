@@ -17,7 +17,8 @@ describe("Commands Index", () => {
       expect(allCommands.time).toBeDefined();
       expect(allCommands.pause).toBeDefined();
       expect(allCommands.hours).toBeDefined();
-      expect(Object.keys(allCommands)).toHaveLength(7);
+      expect(allCommands.health).toBeDefined();
+      expect(Object.keys(allCommands)).toHaveLength(8);
     });
 
     it("should have execute functions for all commands", () => {
@@ -47,8 +48,9 @@ describe("Commands Index", () => {
       expect(commands.time).toBeDefined();
       expect(commands.pause).toBeDefined();
       expect(commands.hours).toBeDefined();
+      expect(commands.health).toBeDefined();
       expect("deploy" in commands).toBe(false);
-      expect(Object.keys(commands)).toHaveLength(6);
+      expect(Object.keys(commands)).toHaveLength(7);
     });
   });
 
@@ -68,7 +70,7 @@ describe("Commands Index", () => {
   describe("allCommandsData", () => {
     it("should contain data for all commands", () => {
       expect(Array.isArray(allCommandsData)).toBe(true);
-      expect(allCommandsData).toHaveLength(7);
+      expect(allCommandsData).toHaveLength(8);
 
       // Check that all data objects are SlashCommandBuilder instances
       allCommandsData.forEach((commandData) => {
@@ -93,7 +95,7 @@ describe("Commands Index", () => {
   describe("commandsData", () => {
     it("should contain data for user commands only", () => {
       expect(Array.isArray(commandsData)).toBe(true);
-      expect(commandsData).toHaveLength(6);
+      expect(commandsData).toHaveLength(7);
 
       // Test that it has one less command than allCommands (missing deploy)
       expect(commandsData.length).toBe(allCommandsData.length - 1);

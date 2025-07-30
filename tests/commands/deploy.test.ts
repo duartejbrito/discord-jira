@@ -50,7 +50,7 @@ describe("Deploy Command", () => {
 
     // Create mock interaction
     mockInteraction = createMockInteraction({
-      guildId: "123456789",
+      guildId: "123456789012345678",
       user: { id: "owner123" },
     });
 
@@ -83,7 +83,7 @@ describe("Deploy Command", () => {
     expect(mockServices.ILoggerService.logInfo).toHaveBeenCalledWith(
       "Deploy command executed",
       {
-        GuildId: "123456789",
+        GuildId: "123456789012345678",
       }
     );
   });
@@ -165,7 +165,7 @@ describe("Deploy Command", () => {
     expect(mockServices.ILoggerService.logInfo).toHaveBeenCalledWith(
       "Deploy command executed",
       {
-        GuildId: "123456789",
+        GuildId: "123456789012345678",
       }
     );
   });

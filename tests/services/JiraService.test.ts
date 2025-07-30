@@ -1,10 +1,34 @@
-import { IJiraService } from "../../src/services/interfaces";
-import { JiraService } from "../../src/services/JiraService";
+import { IJiraService, JiraService } from "../../src/services/JiraService";
 import {
   createMockIHttpService,
   createMockResponse,
   testDataFactory,
 } from "../test-utils";
+
+// Mock ServiceContainer at module level
+jest.mock("../../src/services/ServiceContainer", () => ({
+  ServiceContainer: {
+    getInstance: jest.fn().mockReturnValue({
+      get: jest.fn().mockImplementation((serviceName: string) => {
+        if (serviceName === "ILoggerService") {
+          return {
+            info: jest.fn(),
+            warn: jest.fn(),
+            debug: jest.fn(),
+            error: jest.fn(),
+            initialize: jest.fn(),
+            logInfo: jest.fn(),
+            logWarn: jest.fn(),
+            logError: jest.fn(),
+            logDebug: jest.fn(),
+            getInstance: jest.fn(),
+          };
+        }
+        throw new Error(`Service ${serviceName} not found in container`);
+      }),
+    }),
+  },
+}));
 
 describe("JiraService", () => {
   let jiraService: IJiraService;
@@ -33,8 +57,8 @@ describe("JiraService", () => {
 
       const result = await jiraService.getServerInfo(
         "test.atlassian.net",
-        "user",
-        "token"
+        "user@example.com",
+        "validtoken123"
       );
 
       expect(mockHttpService.fetch).toHaveBeenCalledWith(
@@ -62,8 +86,12 @@ describe("JiraService", () => {
       mockHttpService.fetch.mockResolvedValue(mockResponse);
 
       await expect(
-        jiraService.getServerInfo("test.atlassian.net", "user", "invalid-token")
-      ).rejects.toThrow("Server info request failed: 401");
+        jiraService.getServerInfo(
+          "test.atlassian.net",
+          "user@example.com",
+          "invalid-token"
+        )
+      ).rejects.toThrow("Invalid credentials (getting server info)");
     });
   });
 
@@ -84,8 +112,8 @@ describe("JiraService", () => {
 
       const result = await jiraService.getIssuesWorked(
         "test.atlassian.net",
-        "user",
-        "token",
+        "user@example.com",
+        "validtoken123",
         "project = TEST"
       );
 
@@ -116,8 +144,8 @@ describe("JiraService", () => {
       // Call without JQL parameter to test default
       const result = await jiraService.getIssuesWorked(
         "test.atlassian.net",
-        "user",
-        "token"
+        "user@example.com",
+        "validtoken123"
       );
 
       // Verify the call was made with the default JQL
@@ -151,8 +179,8 @@ describe("JiraService", () => {
 
       const result = await jiraService.getCurrentUser(
         "test.atlassian.net",
-        "user",
-        "token"
+        "user@example.com",
+        "validtoken123"
       );
 
       expect(mockHttpService.fetch).toHaveBeenCalledWith(
@@ -182,7 +210,7 @@ describe("JiraService", () => {
       await expect(
         jiraService.getCurrentUser(
           "test.atlassian.net",
-          "user",
+          "user@example.com",
           "invalid-token"
         )
       ).rejects.toThrow("Current user request failed: 403");
@@ -207,8 +235,8 @@ describe("JiraService", () => {
 
       const result = await jiraService.searchIssues(
         "test.atlassian.net",
-        "user",
-        "token",
+        "user@example.com",
+        "validtoken123",
         "project = TEST"
       );
 
@@ -239,11 +267,13 @@ describe("JiraService", () => {
       await expect(
         jiraService.searchIssues(
           "test.atlassian.net",
-          "user",
-          "token",
+          "user@example.com",
+          "validtoken123",
           "invalid jql"
         )
-      ).rejects.toThrow("Issues search failed: 400");
+      ).rejects.toThrow(
+        "JQL query does not appear to contain valid JQL syntax"
+      );
     });
   });
 
@@ -259,8 +289,8 @@ describe("JiraService", () => {
       const date = new Date("2024-01-15T10:00:00.000Z");
       const result = await jiraService.getIssueWorklog(
         "test.atlassian.net",
-        "user",
-        "token",
+        "user@example.com",
+        "validtoken123",
         "TEST-123",
         date
       );
@@ -290,8 +320,8 @@ describe("JiraService", () => {
 
       const result = await jiraService.postWorklog(
         "test.atlassian.net",
-        "user",
-        "token",
+        "user@example.com",
+        "validtoken123",
         "TEST-123",
         3600,
         new Date("2024-01-15T09:00:00.000Z")
@@ -318,8 +348,8 @@ describe("JiraService", () => {
 
       const result = await jiraService.postWorklog(
         "test.atlassian.net",
-        "user",
-        "token",
+        "user@example.com",
+        "validtoken123",
         "TEST-123",
         3600,
         new Date("2024-01-15T09:00:00.000Z"),

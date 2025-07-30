@@ -2,6 +2,7 @@
 import { MessageFlags } from "discord.js";
 import { execute, data, name } from "../../src/commands/setup";
 import { JiraConfig } from "../../src/db/models";
+import { ApplicationError, ErrorType } from "../../src/services/ErrorHandler";
 import { ServiceContainer } from "../../src/services/ServiceContainer";
 import {
   createMockInteraction,
@@ -108,18 +109,24 @@ describe("Setup Command", () => {
 
     // Create mock interaction
     mockInteraction = createMockInteraction({
-      guildId: "123456789",
-      user: { id: "user123" },
+      guildId: "123456789012345678",
+      user: { id: "987654321098765432" },
       options: {
         get: jest.fn(),
       },
+    });
+
+    // Ensure deferReply properly updates the deferred state after jest.clearAllMocks()
+    mockInteraction.deferReply.mockImplementation(() => {
+      mockInteraction.deferred = true;
+      return Promise.resolve(undefined);
     });
   });
 
   describe("when creating new configuration", () => {
     beforeEach(() => {
       (mockInteraction.options.get as jest.Mock)
-        .mockReturnValueOnce({ value: "https://test.atlassian.net" }) // host
+        .mockReturnValueOnce({ value: "test.atlassian.net" }) // host
         .mockReturnValueOnce({ value: "testuser@example.com" }) // username
         .mockReturnValueOnce({ value: "test-token" }) // token
         .mockReturnValueOnce({ value: "project = TEST" }); // jql
@@ -127,11 +134,11 @@ describe("Setup Command", () => {
       mockServices.IJiraService.getServerInfo.mockResolvedValue({ ok: true });
 
       const mockConfig = {
-        guildId: "123456789",
-        host: "https://test.atlassian.net",
+        guildId: "123456789012345678",
+        host: "test.atlassian.net",
         username: "testuser@example.com",
         token: "test-token",
-        userId: "user123",
+        userId: "987654321098765432",
         timeJqlOverride: "project = TEST",
         schedulePaused: false,
         save: jest.fn().mockResolvedValue(undefined),
@@ -152,7 +159,7 @@ describe("Setup Command", () => {
       await execute(mockInteraction);
 
       expect(mockServices.IJiraService.getServerInfo).toHaveBeenCalledWith(
-        "https://test.atlassian.net",
+        "test.atlassian.net",
         "testuser@example.com",
         "test-token"
       );
@@ -163,15 +170,15 @@ describe("Setup Command", () => {
 
       expect(mockJiraConfig.findOrCreate).toHaveBeenCalledWith({
         where: {
-          guildId: "123456789",
-          userId: "user123",
+          guildId: "123456789012345678",
+          userId: "987654321098765432",
         },
         defaults: {
-          guildId: "123456789",
-          host: "https://test.atlassian.net",
+          guildId: "123456789012345678",
+          host: "test.atlassian.net",
           username: "testuser@example.com",
           token: "test-token",
-          userId: "user123",
+          userId: "987654321098765432",
           timeJqlOverride: "project = TEST",
           schedulePaused: false,
           dailyHours: 8,
@@ -183,7 +190,7 @@ describe("Setup Command", () => {
       await execute(mockInteraction);
 
       expect(mockInteraction.followUp).toHaveBeenCalledWith({
-        content: "Your Jira configuration has been saved.",
+        content: "✅ Your Jira configuration has been saved successfully!",
         flags: MessageFlags.Ephemeral,
       });
     });
@@ -192,7 +199,7 @@ describe("Setup Command", () => {
   describe("when updating existing configuration", () => {
     beforeEach(() => {
       (mockInteraction.options.get as jest.Mock)
-        .mockReturnValueOnce({ value: "https://updated.atlassian.net" }) // host
+        .mockReturnValueOnce({ value: "updated.atlassian.net" }) // host
         .mockReturnValueOnce({ value: "updated@example.com" }) // username
         .mockReturnValueOnce({ value: "updated-token" }) // token
         .mockReturnValueOnce({ value: "project = UPDATED" }); // jql
@@ -200,11 +207,11 @@ describe("Setup Command", () => {
       mockServices.IJiraService.getServerInfo.mockResolvedValue({ ok: true });
 
       const mockConfig = {
-        guildId: "123456789",
+        guildId: "123456789012345678",
         host: "https://old.atlassian.net",
         username: "old@example.com",
         token: "old-token",
-        userId: "user123",
+        userId: "987654321098765432",
         timeJqlOverride: "project = OLD",
         schedulePaused: false,
         save: jest.fn().mockResolvedValue(undefined),
@@ -217,7 +224,7 @@ describe("Setup Command", () => {
       await execute(mockInteraction);
 
       const [config] = await mockJiraConfig.findOrCreate.mock.results[0].value;
-      expect(config.host).toBe("https://updated.atlassian.net");
+      expect(config.host).toBe("updated.atlassian.net");
       expect(config.username).toBe("updated@example.com");
       expect(config.token).toBe("updated-token");
       expect(config.timeJqlOverride).toBe("project = UPDATED");
@@ -228,7 +235,7 @@ describe("Setup Command", () => {
       await execute(mockInteraction);
 
       expect(mockInteraction.followUp).toHaveBeenCalledWith({
-        content: "Your Jira configuration has been saved.",
+        content: "✅ Your Jira configuration has been saved successfully!",
         flags: MessageFlags.Ephemeral,
       });
     });
@@ -237,7 +244,7 @@ describe("Setup Command", () => {
   describe("when setup without JQL override", () => {
     beforeEach(() => {
       (mockInteraction.options.get as jest.Mock)
-        .mockReturnValueOnce({ value: "https://test.atlassian.net" }) // host
+        .mockReturnValueOnce({ value: "test.atlassian.net" }) // host
         .mockReturnValueOnce({ value: "testuser@example.com" }) // username
         .mockReturnValueOnce({ value: "test-token" }) // token
         .mockReturnValueOnce(null); // jql (optional)
@@ -245,11 +252,11 @@ describe("Setup Command", () => {
       mockServices.IJiraService.getServerInfo.mockResolvedValue({ ok: true });
 
       const mockConfig = {
-        guildId: "123456789",
-        host: "https://test.atlassian.net",
+        guildId: "123456789012345678",
+        host: "test.atlassian.net",
         username: "testuser@example.com",
         token: "test-token",
-        userId: "user123",
+        userId: "987654321098765432",
         timeJqlOverride: undefined,
         schedulePaused: false,
         save: jest.fn().mockResolvedValue(undefined),
@@ -263,15 +270,15 @@ describe("Setup Command", () => {
 
       expect(mockJiraConfig.findOrCreate).toHaveBeenCalledWith({
         where: {
-          guildId: "123456789",
-          userId: "user123",
+          guildId: "123456789012345678",
+          userId: "987654321098765432",
         },
         defaults: {
-          guildId: "123456789",
-          host: "https://test.atlassian.net",
+          guildId: "123456789012345678",
+          host: "test.atlassian.net",
           username: "testuser@example.com",
           token: "test-token",
-          userId: "user123",
+          userId: "987654321098765432",
           timeJqlOverride: undefined,
           schedulePaused: false,
           dailyHours: 8,
@@ -290,65 +297,98 @@ describe("Setup Command", () => {
     });
 
     it("should handle Jira connection failure", async () => {
-      mockServices.IJiraService.getServerInfo.mockResolvedValue({
-        ok: false,
-        statusText: "Unauthorized",
-      });
+      mockServices.IJiraService.getServerInfo.mockRejectedValue(
+        new ApplicationError(
+          "Invalid credentials (getting server info)",
+          ErrorType.AUTHENTICATION_ERROR,
+          true,
+          401
+        )
+      );
 
       await execute(mockInteraction);
 
-      expect(mockInteraction.followUp).toHaveBeenCalledWith({
-        content: "Failed to connect to Jira: Unauthorized",
-        flags: MessageFlags.Ephemeral,
-      });
+      expect(mockInteraction.editReply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content:
+            "❌ **Authentication Failed**: Your Jira credentials appear to be invalid. Please run `/setup` to reconfigure your connection.",
+        })
+      );
 
       expect(mockJiraConfig.findOrCreate).not.toHaveBeenCalled();
     });
 
     it("should handle Jira connection failure with different error messages", async () => {
-      mockServices.IJiraService.getServerInfo.mockResolvedValue({
-        ok: false,
-        statusText: "Not Found",
-      });
+      mockServices.IJiraService.getServerInfo.mockRejectedValue(
+        new ApplicationError(
+          "Resource not found (getting server info)",
+          ErrorType.JIRA_API_ERROR,
+          true,
+          404
+        )
+      );
 
       await execute(mockInteraction);
 
-      expect(mockInteraction.followUp).toHaveBeenCalledWith({
-        content: "Failed to connect to Jira: Not Found",
-        flags: MessageFlags.Ephemeral,
-      });
+      expect(mockInteraction.editReply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content:
+            "❌ **Jira Error**: Resource not found (getting server info)\n\nPlease check your Jira configuration with `/info` and verify your credentials.",
+        })
+      );
     });
 
     it("should handle service container errors", async () => {
-      (ServiceContainer.getInstance as jest.Mock) = jest
-        .fn()
-        .mockImplementation(() => {
-          throw new Error("Service container not initialized");
-        });
+      // Override the successful mock set up in beforeEach
+      (ServiceContainer.getInstance as jest.Mock).mockImplementation(() => {
+        throw new Error("Service container not initialized");
+      });
 
-      await expect(execute(mockInteraction)).rejects.toThrow(
-        "Service container not initialized"
+      await expect(execute(mockInteraction)).resolves.not.toThrow();
+
+      // Verify that an error response was sent to the user
+      // Since ServiceContainer fails before deferReply, it should use reply() not editReply()
+      expect(mockInteraction.reply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringMatching(
+            /^❌ \*\*Unexpected Error\*\*.*Error ID:/s
+          ),
+          flags: expect.any(Number),
+        })
       );
     });
 
     it("should handle database errors", async () => {
-      mockServices.IJiraService.getServerInfo.mockResolvedValue({ ok: true });
+      mockServices.IJiraService.getServerInfo.mockResolvedValue({
+        version: "8.5.0",
+      });
       mockJiraConfig.findOrCreate.mockRejectedValue(
         new Error("Database error")
       );
 
-      await expect(execute(mockInteraction)).rejects.toThrow("Database error");
+      await expect(execute(mockInteraction)).resolves.not.toThrow();
+
+      // Verify that an error response was sent to the user
+      expect(mockInteraction.editReply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringMatching(
+            /^❌ \*\*Unexpected Error\*\*.*Error ID:/s
+          ),
+        })
+      );
     });
 
     it("should handle save errors when updating configuration", async () => {
-      mockServices.IJiraService.getServerInfo.mockResolvedValue({ ok: true });
+      mockServices.IJiraService.getServerInfo.mockResolvedValue({
+        version: "8.5.0",
+      });
 
       const mockConfig = {
-        guildId: "123456789",
+        guildId: "123456789012345678",
         host: "https://old.atlassian.net",
         username: "old@example.com",
         token: "old-token",
-        userId: "user123",
+        userId: "987654321098765432",
         timeJqlOverride: null,
         schedulePaused: false,
         save: jest.fn().mockRejectedValue(new Error("Save failed")),
@@ -356,25 +396,44 @@ describe("Setup Command", () => {
 
       mockJiraConfig.findOrCreate.mockResolvedValue([mockConfig as any, false]);
 
-      await expect(execute(mockInteraction)).rejects.toThrow("Save failed");
+      await expect(execute(mockInteraction)).resolves.not.toThrow();
+
+      // Verify that an error response was sent to the user
+      expect(mockInteraction.editReply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringMatching(
+            /^❌ \*\*Unexpected Error\*\*.*Error ID:/s
+          ),
+        })
+      );
     });
 
     it("should handle missing guildId", async () => {
       // Test edge case where guildId might be null
       mockInteraction.guildId = null;
 
-      mockServices.IJiraService.getServerInfo.mockResolvedValue({ ok: true });
+      mockServices.IJiraService.getServerInfo.mockResolvedValue({
+        version: "8.5.0",
+      });
 
-      // This should not throw but will be handled by the non-null assertion
-      // In real scenarios, guildId is guaranteed for guild commands
-      await expect(execute(mockInteraction)).rejects.toThrow();
+      // This should be handled gracefully with error handling
+      await expect(execute(mockInteraction)).resolves.not.toThrow();
+
+      // Verify that an error response was sent to the user
+      expect(mockInteraction.editReply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringMatching(
+            /^❌ \*\*Unexpected Error\*\*.*Error ID:/s
+          ),
+        })
+      );
     });
   });
 
   describe("when setting daily hours", () => {
     it("should save custom daily hours when provided", async () => {
       (mockInteraction.options.get as jest.Mock)
-        .mockReturnValueOnce({ value: "https://test.atlassian.net" }) // host
+        .mockReturnValueOnce({ value: "test.atlassian.net" }) // host
         .mockReturnValueOnce({ value: "testuser@example.com" }) // username
         .mockReturnValueOnce({ value: "test-token" }) // token
         .mockReturnValueOnce({ value: "project = TEST" }) // jql
@@ -383,11 +442,11 @@ describe("Setup Command", () => {
       mockServices.IJiraService.getServerInfo.mockResolvedValue({ ok: true });
 
       const mockConfig = {
-        guildId: "123456789",
-        host: "https://test.atlassian.net",
+        guildId: "123456789012345678",
+        host: "test.atlassian.net",
         username: "testuser@example.com",
         token: "test-token",
-        userId: "user123",
+        userId: "987654321098765432",
         timeJqlOverride: "project = TEST",
         schedulePaused: false,
         dailyHours: 6,
@@ -400,15 +459,15 @@ describe("Setup Command", () => {
 
       expect(mockJiraConfig.findOrCreate).toHaveBeenCalledWith({
         where: {
-          guildId: "123456789",
-          userId: "user123",
+          guildId: "123456789012345678",
+          userId: "987654321098765432",
         },
         defaults: {
-          guildId: "123456789",
-          host: "https://test.atlassian.net",
+          guildId: "123456789012345678",
+          host: "test.atlassian.net",
           username: "testuser@example.com",
           token: "test-token",
-          userId: "user123",
+          userId: "987654321098765432",
           timeJqlOverride: "project = TEST",
           schedulePaused: false,
           dailyHours: 6,
@@ -418,7 +477,7 @@ describe("Setup Command", () => {
 
     it("should default to 8 hours when daily-hours not provided", async () => {
       (mockInteraction.options.get as jest.Mock)
-        .mockReturnValueOnce({ value: "https://test.atlassian.net" }) // host
+        .mockReturnValueOnce({ value: "test.atlassian.net" }) // host
         .mockReturnValueOnce({ value: "testuser@example.com" }) // username
         .mockReturnValueOnce({ value: "test-token" }) // token
         .mockReturnValueOnce({ value: "project = TEST" }) // jql
@@ -427,11 +486,11 @@ describe("Setup Command", () => {
       mockServices.IJiraService.getServerInfo.mockResolvedValue({ ok: true });
 
       const mockConfig = {
-        guildId: "123456789",
-        host: "https://test.atlassian.net",
+        guildId: "123456789012345678",
+        host: "test.atlassian.net",
         username: "testuser@example.com",
         token: "test-token",
-        userId: "user123",
+        userId: "987654321098765432",
         timeJqlOverride: "project = TEST",
         schedulePaused: false,
         dailyHours: 8,
@@ -444,15 +503,15 @@ describe("Setup Command", () => {
 
       expect(mockJiraConfig.findOrCreate).toHaveBeenCalledWith({
         where: {
-          guildId: "123456789",
-          userId: "user123",
+          guildId: "123456789012345678",
+          userId: "987654321098765432",
         },
         defaults: {
-          guildId: "123456789",
-          host: "https://test.atlassian.net",
+          guildId: "123456789012345678",
+          host: "test.atlassian.net",
           username: "testuser@example.com",
           token: "test-token",
-          userId: "user123",
+          userId: "987654321098765432",
           timeJqlOverride: "project = TEST",
           schedulePaused: false,
           dailyHours: 8,
@@ -462,7 +521,7 @@ describe("Setup Command", () => {
 
     it("should handle boundary daily hours values", async () => {
       (mockInteraction.options.get as jest.Mock)
-        .mockReturnValueOnce({ value: "https://test.atlassian.net" }) // host
+        .mockReturnValueOnce({ value: "test.atlassian.net" }) // host
         .mockReturnValueOnce({ value: "testuser@example.com" }) // username
         .mockReturnValueOnce({ value: "test-token" }) // token
         .mockReturnValueOnce(null) // jql
@@ -471,11 +530,11 @@ describe("Setup Command", () => {
       mockServices.IJiraService.getServerInfo.mockResolvedValue({ ok: true });
 
       const mockConfig = {
-        guildId: "123456789",
-        host: "https://test.atlassian.net",
+        guildId: "123456789012345678",
+        host: "test.atlassian.net",
         username: "testuser@example.com",
         token: "test-token",
-        userId: "user123",
+        userId: "987654321098765432",
         timeJqlOverride: undefined,
         schedulePaused: false,
         dailyHours: 1,
@@ -488,15 +547,15 @@ describe("Setup Command", () => {
 
       expect(mockJiraConfig.findOrCreate).toHaveBeenCalledWith({
         where: {
-          guildId: "123456789",
-          userId: "user123",
+          guildId: "123456789012345678",
+          userId: "987654321098765432",
         },
         defaults: {
-          guildId: "123456789",
-          host: "https://test.atlassian.net",
+          guildId: "123456789012345678",
+          host: "test.atlassian.net",
           username: "testuser@example.com",
           token: "test-token",
-          userId: "user123",
+          userId: "987654321098765432",
           timeJqlOverride: undefined,
           schedulePaused: false,
           dailyHours: 1,
@@ -506,7 +565,7 @@ describe("Setup Command", () => {
 
     it("should update daily hours for existing config", async () => {
       (mockInteraction.options.get as jest.Mock)
-        .mockReturnValueOnce({ value: "https://updated.atlassian.net" }) // host
+        .mockReturnValueOnce({ value: "updated.atlassian.net" }) // host
         .mockReturnValueOnce({ value: "updated@example.com" }) // username
         .mockReturnValueOnce({ value: "updated-token" }) // token
         .mockReturnValueOnce({ value: "project = UPDATED" }) // jql
@@ -515,11 +574,11 @@ describe("Setup Command", () => {
       mockServices.IJiraService.getServerInfo.mockResolvedValue({ ok: true });
 
       const mockConfig = {
-        guildId: "123456789",
+        guildId: "123456789012345678",
         host: "https://old.atlassian.net",
         username: "old@example.com",
         token: "old-token",
-        userId: "user123",
+        userId: "987654321098765432",
         timeJqlOverride: "project = OLD",
         schedulePaused: false,
         dailyHours: 8,
@@ -531,7 +590,7 @@ describe("Setup Command", () => {
       await execute(mockInteraction);
 
       // Verify the config was updated
-      expect(mockConfig.host).toBe("https://updated.atlassian.net");
+      expect(mockConfig.host).toBe("updated.atlassian.net");
       expect(mockConfig.username).toBe("updated@example.com");
       expect(mockConfig.token).toBe("updated-token");
       expect(mockConfig.timeJqlOverride).toBe("project = UPDATED");
@@ -543,7 +602,7 @@ describe("Setup Command", () => {
   describe("parameter validation", () => {
     it("should extract all parameters correctly", async () => {
       const mockGetValues = [
-        { value: "https://test.atlassian.net" }, // host
+        { value: "test.atlassian.net" }, // host
         { value: "testuser@example.com" }, // username
         { value: "test-token" }, // token
         { value: "project = TEST" }, // jql
@@ -558,11 +617,11 @@ describe("Setup Command", () => {
       mockServices.IJiraService.getServerInfo.mockResolvedValue({ ok: true });
 
       const mockConfig = {
-        guildId: "123456789",
-        host: "https://test.atlassian.net",
+        guildId: "123456789012345678",
+        host: "test.atlassian.net",
         username: "testuser@example.com",
         token: "test-token",
-        userId: "user123",
+        userId: "987654321098765432",
         timeJqlOverride: "project = TEST",
         schedulePaused: false,
         dailyHours: 10,
@@ -589,7 +648,7 @@ describe("Setup Command", () => {
 
     it("should handle interaction deferReply", async () => {
       (mockInteraction.options.get as jest.Mock)
-        .mockReturnValueOnce({ value: "https://test.atlassian.net" })
+        .mockReturnValueOnce({ value: "test.atlassian.net" })
         .mockReturnValueOnce({ value: "testuser@example.com" })
         .mockReturnValueOnce({ value: "test-token" })
         .mockReturnValueOnce(null)
@@ -598,11 +657,11 @@ describe("Setup Command", () => {
       mockServices.IJiraService.getServerInfo.mockResolvedValue({ ok: true });
 
       const mockConfig = {
-        guildId: "123456789",
-        host: "https://test.atlassian.net",
+        guildId: "123456789012345678",
+        host: "test.atlassian.net",
         username: "testuser@example.com",
         token: "test-token",
-        userId: "user123",
+        userId: "987654321098765432",
         timeJqlOverride: undefined,
         schedulePaused: false,
         dailyHours: 8,

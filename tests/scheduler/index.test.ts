@@ -123,11 +123,11 @@ describe("Scheduler", () => {
     it("should handle configs with schedulePaused false", async () => {
       const mockConfigs = [
         {
-          userId: "user1",
-          guildId: "guild1",
-          host: "https://test.jira.com",
+          userId: "987654321098765432",
+          guildId: "123456789012345678",
+          host: "test.jira.com",
           username: "test@example.com",
-          token: "token123",
+          token: "validtoken123456",
           schedulePaused: false,
           timeJqlOverride: null,
         },
@@ -154,9 +154,9 @@ describe("Scheduler", () => {
         where: { schedulePaused: false },
       });
       expect(mockServices.IJiraService.getIssuesWorked).toHaveBeenCalledWith(
-        "https://test.jira.com",
+        "test.jira.com",
         "test@example.com",
-        "token123",
+        "validtoken123456",
         // eslint-disable-next-line quotes
         'assignee WAS currentUser() ON -1d AND status WAS "In Progress" ON -1d'
       );
@@ -165,14 +165,18 @@ describe("Scheduler", () => {
     it("should handle custom JQL override", async () => {
       const mockConfigs = [
         {
-          userId: "user1",
-          guildId: "guild1",
-          host: "https://test.jira.com",
+          userId: "987654321098765432",
+          guildId: "123456789012345678",
+          host: "test.jira.com",
           username: "test@example.com",
-          token: "token123",
+          token: "validtoken123456",
           schedulePaused: false,
           timeJqlOverride: {
-            format: jest.fn().mockReturnValue("custom JQL query"),
+            format: jest
+              .fn()
+              .mockReturnValue(
+                "assignee = currentUser() AND status = 'In Progress'"
+              ),
           },
         },
       ];
@@ -195,21 +199,21 @@ describe("Scheduler", () => {
       await scheduledJobCallback();
 
       expect(mockServices.IJiraService.getIssuesWorked).toHaveBeenCalledWith(
-        "https://test.jira.com",
+        "test.jira.com",
         "test@example.com",
-        "token123",
-        "custom JQL query"
+        "validtoken123456",
+        "assignee = currentUser() AND status = 'In Progress'"
       );
     });
 
     it("should handle failed API response", async () => {
       const mockConfigs = [
         {
-          userId: "user1",
-          guildId: "guild1",
-          host: "https://test.jira.com",
+          userId: "987654321098765432",
+          guildId: "123456789012345678",
+          host: "test.jira.com",
           username: "test@example.com",
-          token: "token123",
+          token: "validtoken123456",
           schedulePaused: false,
           timeJqlOverride: null,
         },
@@ -224,26 +228,35 @@ describe("Scheduler", () => {
         statusText: "Unauthorized",
       });
 
-      const consoleSpy = jest.spyOn(console, "error").mockImplementation();
+      const loggerErrorSpy = jest.spyOn(mockServices.ILoggerService, "error");
 
       initScheduledJobs();
       await scheduledJobCallback();
 
-      expect(consoleSpy).toHaveBeenCalledWith(
-        "Failed to get work for user1: Unauthorized"
+      expect(loggerErrorSpy).toHaveBeenCalledWith(
+        "Scheduler job failed",
+        expect.objectContaining({
+          errorMessage:
+            "Jira API error: Unauthorized (getting work for user 987654321098765432)",
+          context: {
+            userId: "987654321098765432",
+            guildId: "123456789012345678",
+            operation: "getIssuesWorked",
+          },
+        })
       );
 
-      consoleSpy.mockRestore();
+      loggerErrorSpy.mockRestore();
     });
 
     it("should handle no work found", async () => {
       const mockConfigs = [
         {
-          userId: "user1",
-          guildId: "guild1",
-          host: "https://test.jira.com",
+          userId: "987654321098765432",
+          guildId: "123456789012345678",
+          host: "test.jira.com",
           username: "test@example.com",
-          token: "token123",
+          token: "validtoken123456",
           schedulePaused: false,
           timeJqlOverride: null,
         },
@@ -273,11 +286,11 @@ describe("Scheduler", () => {
     it("should process issues and create worklogs", async () => {
       const mockConfigs = [
         {
-          userId: "user1",
-          guildId: "guild1",
-          host: "https://test.jira.com",
+          userId: "987654321098765432",
+          guildId: "123456789012345678",
+          host: "test.jira.com",
           username: "test@example.com",
-          token: "token123",
+          token: "validtoken123456",
           schedulePaused: false,
           timeJqlOverride: null,
         },
@@ -336,11 +349,11 @@ describe("Scheduler", () => {
     it("should skip processing when existing worklogs found", async () => {
       const mockConfigs = [
         {
-          userId: "user1",
-          guildId: "guild1",
-          host: "https://test.jira.com",
+          userId: "987654321098765432",
+          guildId: "123456789012345678",
+          host: "test.jira.com",
           username: "test@example.com",
-          token: "token123",
+          token: "validtoken123456",
           schedulePaused: false,
           timeJqlOverride: null,
         },
@@ -395,11 +408,11 @@ describe("Scheduler", () => {
     it("should use configured dailyHours for time distribution", async () => {
       const mockConfigs = [
         {
-          userId: "user1",
-          guildId: "guild1",
-          host: "https://test.jira.com",
+          userId: "987654321098765432",
+          guildId: "123456789012345678",
+          host: "test.jira.com",
           username: "test@example.com",
-          token: "token123",
+          token: "validtoken123456",
           schedulePaused: false,
           timeJqlOverride: null,
           dailyHours: 6, // Custom 6 hours instead of default 8
@@ -467,17 +480,17 @@ describe("Scheduler", () => {
 
       // Verify the calls were made with correct other parameters
       expect(mockServices.IJiraService.postWorklog).toHaveBeenCalledWith(
-        "https://test.jira.com",
+        "test.jira.com",
         "test@example.com",
-        "token123",
+        "validtoken123456",
         "10001",
         firstCallTime,
         expect.any(Date)
       );
       expect(mockServices.IJiraService.postWorklog).toHaveBeenCalledWith(
-        "https://test.jira.com",
+        "test.jira.com",
         "test@example.com",
-        "token123",
+        "validtoken123456",
         "10002",
         secondCallTime,
         expect.any(Date)
@@ -487,11 +500,11 @@ describe("Scheduler", () => {
     it("should default to 8 hours when dailyHours is not set", async () => {
       const mockConfigs = [
         {
-          userId: "user1",
-          guildId: "guild1",
-          host: "https://test.jira.com",
+          userId: "987654321098765432",
+          guildId: "123456789012345678",
+          host: "test.jira.com",
           username: "test@example.com",
-          token: "token123",
+          token: "validtoken123456",
           schedulePaused: false,
           timeJqlOverride: null,
           // dailyHours is undefined/null
@@ -539,9 +552,9 @@ describe("Scheduler", () => {
 
       // With default 8 hours, expect 8 * 3600 = 28800 seconds for 1 issue
       expect(mockServices.IJiraService.postWorklog).toHaveBeenCalledWith(
-        "https://test.jira.com",
+        "test.jira.com",
         "test@example.com",
-        "token123",
+        "validtoken123456",
         "10001",
         28800, // 8 hours in seconds
         expect.any(Date)

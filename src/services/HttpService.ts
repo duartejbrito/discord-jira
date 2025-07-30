@@ -2,7 +2,15 @@ import fetch, {
   RequestInit as NodeFetchRequestInit,
   Response as NodeFetchResponse,
 } from "node-fetch";
-import { IHttpService } from "./interfaces";
+
+/* eslint-disable no-unused-vars */
+export interface IHttpService {
+  fetch(
+    url: string,
+    options?: NodeFetchRequestInit
+  ): Promise<NodeFetchResponse>;
+}
+/* eslint-enable no-unused-vars */
 
 export class HttpService implements IHttpService {
   private static instance: IHttpService;

@@ -4,7 +4,7 @@
  */
 
 import { MessageFlags } from "discord.js";
-import { IHttpService } from "../src/services/interfaces";
+import { IHttpService } from "../src/services/HttpService";
 
 /**
  * Creates a mock ServiceContainer with common service mocks
@@ -22,6 +22,7 @@ export function createMockServiceContainer() {
     IJiraService: createMockIJiraService(),
     IHttpService: createMockIHttpService(),
     IConfigService: createMockIConfigService(),
+    IRateLimitService: createMockIRateLimitService(),
     TimeUtils: createMockTimeUtils(),
   };
 
@@ -56,12 +57,12 @@ export function setupServiceContainerMock() {
  * Creates a mock Discord ChatInputCommandInteraction
  */
 export function createMockInteraction(overrides: Partial<any> = {}): any {
-  const defaultInteraction = {
-    guildId: "123456789",
-    user: { id: "user123", username: "testuser" },
-    guild: { id: "123456789" },
-    channelId: "987654321",
-    deferReply: jest.fn().mockResolvedValue(undefined),
+  const mockInteraction = {
+    guildId: "123456789012345678",
+    user: { id: "987654321098765432", username: "testuser" },
+    guild: { id: "123456789012345678" },
+    channelId: "987654321098765432",
+    deferReply: jest.fn(),
     followUp: jest.fn().mockResolvedValue(undefined),
     reply: jest.fn().mockResolvedValue(undefined),
     editReply: jest.fn().mockResolvedValue(undefined),
@@ -77,7 +78,13 @@ export function createMockInteraction(overrides: Partial<any> = {}): any {
     deferred: false,
   };
 
-  return { ...defaultInteraction, ...overrides } as any;
+  // Make deferReply properly update the deferred state
+  mockInteraction.deferReply.mockImplementation(() => {
+    mockInteraction.deferred = true;
+    return Promise.resolve(undefined);
+  });
+
+  return { ...mockInteraction, ...overrides } as any;
 }
 
 /**
@@ -85,11 +92,18 @@ export function createMockInteraction(overrides: Partial<any> = {}): any {
  */
 export function createMockILoggerService() {
   return {
+    // Core logging methods
+    info: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
+    error: jest.fn(),
+    initialize: jest.fn(),
+
+    // Backward compatibility methods (legacy interface)
     logInfo: jest.fn(),
     logWarn: jest.fn(),
     logError: jest.fn(),
     logDebug: jest.fn(),
-    initialize: jest.fn(),
     getInstance: jest.fn(),
   };
 }
@@ -144,6 +158,19 @@ export function createMockIConfigService() {
     isProduction: jest.fn(),
     isDevelopment: jest.fn(),
     isTest: jest.fn(),
+  };
+}
+
+/**
+ * Creates a mock IRateLimitService
+ */
+export function createMockIRateLimitService() {
+  return {
+    checkRateLimit: jest.fn(), // This should not throw by default
+    isRateLimited: jest.fn().mockReturnValue(false),
+    reset: jest.fn(),
+    getRemainingAttempts: jest.fn().mockReturnValue(10),
+    getResetTime: jest.fn().mockReturnValue(Date.now() + 60000),
   };
 }
 

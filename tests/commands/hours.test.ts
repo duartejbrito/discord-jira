@@ -66,11 +66,11 @@ describe("Hours Command", () => {
   describe("Command Execution", () => {
     it("should update daily hours for existing config", async () => {
       const mockConfig = {
-        guildId: "123456789",
+        guildId: "123456789012345678",
         host: "test.atlassian.net",
         username: "testuser",
         token: "testtoken",
-        userId: "user123",
+        userId: "987654321098765432",
         dailyHours: 8,
         save: jest.fn().mockResolvedValue(undefined),
       };
@@ -110,11 +110,11 @@ describe("Hours Command", () => {
 
     it("should log command execution", async () => {
       const mockConfig = {
-        guildId: "123456789",
+        guildId: "123456789012345678",
         host: "test.atlassian.net",
         username: "testuser",
         token: "testtoken",
-        userId: "user123",
+        userId: "987654321098765432",
         dailyHours: 8,
         save: jest.fn().mockResolvedValue(undefined),
       };
@@ -135,11 +135,11 @@ describe("Hours Command", () => {
 
     it("should handle different hour values", async () => {
       const mockConfig = {
-        guildId: "123456789",
+        guildId: "123456789012345678",
         host: "test.atlassian.net",
         username: "testuser",
         token: "testtoken",
-        userId: "user123",
+        userId: "987654321098765432",
         dailyHours: 8,
         save: jest.fn().mockResolvedValue(undefined),
       };
@@ -159,11 +159,11 @@ describe("Hours Command", () => {
 
     it("should handle boundary values correctly", async () => {
       const mockConfig = {
-        guildId: "123456789",
+        guildId: "123456789012345678",
         host: "test.atlassian.net",
         username: "testuser",
         token: "testtoken",
-        userId: "user123",
+        userId: "987654321098765432",
         dailyHours: 8,
         save: jest.fn().mockResolvedValue(undefined),
       };
@@ -201,11 +201,11 @@ describe("Hours Command", () => {
 
     it("should handle database save errors gracefully", async () => {
       const mockConfig = {
-        guildId: "123456789",
+        guildId: "123456789012345678",
         host: "test.atlassian.net",
         username: "testuser",
         token: "testtoken",
-        userId: "user123",
+        userId: "987654321098765432",
         dailyHours: 8,
         save: jest.fn().mockRejectedValue(new Error("Database error")),
       };
@@ -213,10 +213,17 @@ describe("Hours Command", () => {
       mockInteraction.options.get.mockReturnValue({ value: 6 });
       (JiraConfig.findOne as jest.Mock).mockResolvedValue(mockConfig);
 
-      // The execute function should propagate the error
-      await expect(execute(mockInteraction)).rejects.toThrow("Database error");
+      await expect(execute(mockInteraction)).resolves.not.toThrow();
 
       expect(mockConfig.save).toHaveBeenCalled();
+      expect(mockInteraction.reply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringMatching(
+            /^❌ \*\*Unexpected Error\*\*.*Error ID:/s
+          ),
+          flags: MessageFlags.Ephemeral,
+        })
+      );
     });
 
     it("should handle database lookup errors gracefully", async () => {
@@ -225,10 +232,7 @@ describe("Hours Command", () => {
         new Error("Database connection error")
       );
 
-      // The execute function should propagate the error
-      await expect(execute(mockInteraction)).rejects.toThrow(
-        "Database connection error"
-      );
+      await expect(execute(mockInteraction)).resolves.not.toThrow();
 
       expect(JiraConfig.findOne).toHaveBeenCalledWith({
         where: {
@@ -236,6 +240,14 @@ describe("Hours Command", () => {
           userId: mockInteraction.user.id,
         },
       });
+      expect(mockInteraction.reply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringMatching(
+            /^❌ \*\*Unexpected Error\*\*.*Error ID:/s
+          ),
+          flags: MessageFlags.Ephemeral,
+        })
+      );
     });
 
     it("should always log command execution even when config is not found", async () => {
@@ -255,11 +267,11 @@ describe("Hours Command", () => {
 
     it("should extract hours value correctly from interaction", async () => {
       const mockConfig = {
-        guildId: "123456789",
+        guildId: "123456789012345678",
         host: "test.atlassian.net",
         username: "testuser",
         token: "testtoken",
-        userId: "user123",
+        userId: "987654321098765432",
         dailyHours: 8,
         save: jest.fn().mockResolvedValue(undefined),
       };

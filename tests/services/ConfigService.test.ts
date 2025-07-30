@@ -1,5 +1,7 @@
-import { ConfigService } from "../../src/services/ConfigService";
-import { IConfigService } from "../../src/services/interfaces";
+import {
+  IConfigService,
+  ConfigService,
+} from "../../src/services/ConfigService";
 
 describe("ConfigService", () => {
   let configService: IConfigService;

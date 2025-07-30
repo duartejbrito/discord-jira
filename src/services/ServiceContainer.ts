@@ -1,13 +1,11 @@
-import { ConfigService } from "./ConfigService";
-import { HttpService } from "./HttpService";
-import {
-  IHttpService,
-  IConfigService,
-  ILoggerService,
-  IJiraService,
-} from "./interfaces";
-import { JiraService } from "./JiraService";
-import { LoggerService } from "./LoggerService";
+import { ConfigService, IConfigService } from "./ConfigService";
+import { EncryptionService, IEncryptionService } from "./EncryptionService";
+import { HealthCheckService, IHealthCheckService } from "./HealthCheckService";
+import { HttpService, IHttpService } from "./HttpService";
+import { InputValidator } from "./InputValidator";
+import { IJiraService, JiraService } from "./JiraService";
+import { ILoggerService, LoggerService } from "./LoggerService";
+import { IRateLimitService, RateLimitService } from "./RateLimitService";
 
 /**
  * Simple dependency injection container for managing service instances
@@ -67,6 +65,45 @@ export class ServiceContainer {
     const jiraService = JiraService.getInstance();
     container.register<IJiraService>("IJiraService", jiraService);
 
+    // Register new services (excluding ErrorHandler which is static)
+    const inputValidator = new InputValidator();
+    container.register("InputValidator", inputValidator);
+
+    const rateLimitService = new RateLimitService();
+
+    // Set up rate limiting rules
+    rateLimitService.setRule("setup", {
+      maxAttempts: 3,
+      windowMs: 60000, // 1 minute
+    });
+
+    rateLimitService.setRule("time", {
+      maxAttempts: 5,
+      windowMs: 300000, // 5 minutes
+    });
+
+    rateLimitService.setRule("hours", {
+      maxAttempts: 10,
+      windowMs: 60000, // 1 minute
+    });
+
+    container.register<IRateLimitService>(
+      "IRateLimitService",
+      rateLimitService
+    );
+
+    const encryptionService = new EncryptionService();
+    container.register<IEncryptionService>(
+      "IEncryptionService",
+      encryptionService
+    );
+
+    const healthCheckService = new HealthCheckService(loggerService);
+    container.register<IHealthCheckService>(
+      "IHealthCheckService",
+      healthCheckService
+    );
+
     return container;
   }
 
@@ -75,6 +112,44 @@ export class ServiceContainer {
    */
   clear(): void {
     this.services.clear();
+  }
+
+  /**
+   * Static getter methods for commonly used services
+   */
+  static getEncryptionService(): IEncryptionService {
+    const container = ServiceContainer.getInstance();
+    return container.get<IEncryptionService>("IEncryptionService");
+  }
+
+  static getLoggerService(): ILoggerService {
+    const container = ServiceContainer.getInstance();
+    return container.get<ILoggerService>("ILoggerService");
+  }
+
+  static getJiraService(): IJiraService {
+    const container = ServiceContainer.getInstance();
+    return container.get<IJiraService>("IJiraService");
+  }
+
+  static getRateLimitService(): IRateLimitService {
+    const container = ServiceContainer.getInstance();
+    return container.get<IRateLimitService>("IRateLimitService");
+  }
+
+  static getHealthCheckService(): IHealthCheckService {
+    const container = ServiceContainer.getInstance();
+    return container.get<IHealthCheckService>("IHealthCheckService");
+  }
+
+  static getConfigService(): IConfigService {
+    const container = ServiceContainer.getInstance();
+    return container.get<IConfigService>("IConfigService");
+  }
+
+  static getHttpService(): IHttpService {
+    const container = ServiceContainer.getInstance();
+    return container.get<IHttpService>("IHttpService");
   }
 }
 

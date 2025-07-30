@@ -1,6 +1,7 @@
 import { REST, Routes } from "discord.js";
 import { commandsData, ownerCommandsData } from "./commands";
-import { IConfigService, ILoggerService } from "./services/interfaces";
+import { IConfigService } from "./services/ConfigService";
+import { ILoggerService } from "./services/LoggerService";
 import { ServiceContainer } from "./services/ServiceContainer";
 
 // Function to get initialized services

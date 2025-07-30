@@ -1,4 +1,5 @@
 import * as deploy from "./deploy";
+import * as health from "./health";
 import * as hours from "./hours";
 import * as info from "./info";
 import * as pause from "./pause";
@@ -14,6 +15,7 @@ export const allCommands = {
   pause,
   info,
   hours,
+  health,
 };
 
 export const commands = {
@@ -23,6 +25,7 @@ export const commands = {
   pause,
   info,
   hours,
+  health,
 };
 
 export const ownerCommands = {

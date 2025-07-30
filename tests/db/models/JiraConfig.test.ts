@@ -1,5 +1,7 @@
 import { Sequelize } from "sequelize";
 import { JiraConfig } from "../../../src/db/models/JiraConfig";
+import { EncryptionService } from "../../../src/services/EncryptionService";
+import { ServiceContainer } from "../../../src/services/ServiceContainer";
 
 describe("JiraConfig Model", () => {
   let sequelize: Sequelize;
@@ -12,6 +14,10 @@ describe("JiraConfig Model", () => {
   });
 
   beforeEach(async () => {
+    // Initialize services
+    const serviceContainer = ServiceContainer.getInstance();
+    serviceContainer.register("IEncryptionService", new EncryptionService());
+
     // Initialize the model
     JiraConfig.initModel(sequelize);
 
@@ -25,11 +31,11 @@ describe("JiraConfig Model", () => {
 
   it("should create a JiraConfig instance with valid data", async () => {
     const configData = {
-      guildId: "123456789",
+      guildId: "123456789012345678",
       host: "test.atlassian.net",
-      username: "testuser",
-      token: "testtoken",
-      userId: "user123",
+      username: "testuser@example.com",
+      token: "validtesttoken123",
+      userId: "987654321098765432",
       schedulePaused: false,
       dailyHours: 8,
     };
@@ -39,7 +45,11 @@ describe("JiraConfig Model", () => {
     expect(config.guildId).toBe(configData.guildId);
     expect(config.host).toBe(configData.host);
     expect(config.username).toBe(configData.username);
-    expect(config.token).toBe(configData.token);
+    // Since afterFind doesn't fire for create, let's find the record to decrypt it
+    const foundConfig = await JiraConfig.findOne({
+      where: { guildId: configData.guildId },
+    });
+    expect(foundConfig!.token).toBe(configData.token);
     expect(config.userId).toBe(configData.userId);
     expect(config.schedulePaused).toBe(configData.schedulePaused);
     expect(config.dailyHours).toBe(configData.dailyHours);
@@ -47,11 +57,11 @@ describe("JiraConfig Model", () => {
 
   it("should allow optional timeJqlOverride", async () => {
     const configData = {
-      guildId: "123456789",
+      guildId: "123456789012345678",
       host: "test.atlassian.net",
-      username: "testuser",
-      token: "testtoken",
-      userId: "user123",
+      username: "testuser@example.com",
+      token: "validtesttoken123",
+      userId: "987654321098765432",
       timeJqlOverride: "assignee = currentUser() AND updated >= -7d",
       schedulePaused: false,
       dailyHours: 8,
@@ -65,9 +75,9 @@ describe("JiraConfig Model", () => {
   it("should require guildId field", async () => {
     const configData = {
       host: "test.atlassian.net",
-      username: "testuser",
-      token: "testtoken",
-      userId: "user123",
+      username: "testuser@example.com",
+      token: "validtesttoken123",
+      userId: "987654321098765432",
       schedulePaused: false,
     };
 
@@ -76,10 +86,10 @@ describe("JiraConfig Model", () => {
 
   it("should require host field", async () => {
     const configData = {
-      guildId: "123456789",
-      username: "testuser",
-      token: "testtoken",
-      userId: "user123",
+      guildId: "123456789012345678",
+      username: "testuser@example.com",
+      token: "validtesttoken123",
+      userId: "987654321098765432",
       schedulePaused: false,
     };
 
@@ -88,10 +98,10 @@ describe("JiraConfig Model", () => {
 
   it("should require username field", async () => {
     const configData = {
-      guildId: "123456789",
+      guildId: "123456789012345678",
       host: "test.atlassian.net",
-      token: "testtoken",
-      userId: "user123",
+      token: "validtesttoken123",
+      userId: "987654321098765432",
       schedulePaused: false,
     };
 
@@ -100,10 +110,10 @@ describe("JiraConfig Model", () => {
 
   it("should require token field", async () => {
     const configData = {
-      guildId: "123456789",
+      guildId: "123456789012345678",
       host: "test.atlassian.net",
-      username: "testuser",
-      userId: "user123",
+      username: "testuser@example.com",
+      userId: "987654321098765432",
       schedulePaused: false,
     };
 
@@ -112,11 +122,11 @@ describe("JiraConfig Model", () => {
 
   it("should find config by guildId", async () => {
     const configData = {
-      guildId: "123456789",
+      guildId: "123456789012345678",
       host: "test.atlassian.net",
-      username: "testuser",
-      token: "testtoken",
-      userId: "user123",
+      username: "testuser@example.com",
+      token: "validtesttoken123",
+      userId: "987654321098765432",
       schedulePaused: false,
       dailyHours: 8,
     };
@@ -124,7 +134,7 @@ describe("JiraConfig Model", () => {
     await JiraConfig.create(configData);
 
     const foundConfig = await JiraConfig.findOne({
-      where: { guildId: "123456789" },
+      where: { guildId: "123456789012345678" },
     });
 
     expect(foundConfig).not.toBeNull();
@@ -133,11 +143,11 @@ describe("JiraConfig Model", () => {
 
   it("should update schedulePaused status", async () => {
     const configData = {
-      guildId: "123456789",
+      guildId: "123456789012345678",
       host: "test.atlassian.net",
-      username: "testuser",
-      token: "testtoken",
-      userId: "user123",
+      username: "testuser@example.com",
+      token: "validtesttoken123",
+      userId: "987654321098765432",
       schedulePaused: false,
       dailyHours: 8,
     };
@@ -148,7 +158,7 @@ describe("JiraConfig Model", () => {
     await config.save();
 
     const updatedConfig = await JiraConfig.findOne({
-      where: { guildId: "123456789" },
+      where: { guildId: "123456789012345678" },
     });
 
     expect(updatedConfig?.schedulePaused).toBe(true);
@@ -156,11 +166,11 @@ describe("JiraConfig Model", () => {
 
   it("should have default dailyHours of 8", async () => {
     const configData = {
-      guildId: "123456789",
+      guildId: "123456789012345678",
       host: "test.atlassian.net",
-      username: "testuser",
-      token: "testtoken",
-      userId: "user123",
+      username: "testuser@example.com",
+      token: "validtesttoken123",
+      userId: "987654321098765432",
       schedulePaused: false,
     };
 
@@ -171,11 +181,11 @@ describe("JiraConfig Model", () => {
 
   it("should allow custom dailyHours", async () => {
     const configData = {
-      guildId: "123456789",
+      guildId: "123456789012345678",
       host: "test.atlassian.net",
-      username: "testuser",
-      token: "testtoken",
-      userId: "user123",
+      username: "testuser@example.com",
+      token: "validtesttoken123",
+      userId: "987654321098765432",
       schedulePaused: false,
       dailyHours: 6,
     };

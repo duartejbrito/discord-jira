@@ -1,6 +1,27 @@
 import dotenv from "dotenv";
 import { expand } from "dotenv-expand";
-import { IConfigService } from "./interfaces";
+
+/* eslint-disable no-unused-vars */
+export interface IConfigService {
+  get(key: string): string | undefined;
+  getRequired(key: string): string;
+
+  // Utility methods for common config values
+  getDiscordToken(): string;
+  getDiscordClientId(): string;
+  getClientId(): string;
+  getOwnerUserId(): string;
+  getOwnerGuildId(): string;
+  getOwnerLogChannelId(): string | undefined;
+  getDatabaseUrl(): string;
+  getPgConnectionString(): string | undefined;
+  isDiscordLoggingEnabled(): boolean;
+  isPgLoggingEnabled(): boolean;
+  isProduction(): boolean;
+  isDevelopment(): boolean;
+  isTest(): boolean;
+}
+/* eslint-enable no-unused-vars */
 
 export class ConfigService implements IConfigService {
   private static instance: IConfigService;

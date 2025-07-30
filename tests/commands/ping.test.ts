@@ -33,8 +33,8 @@ describe("ping command", () => {
 
     // Create mock interaction
     mockInteraction = createMockInteraction({
-      guildId: "123456789",
-      user: { id: "user123", username: "testuser" },
+      guildId: "123456789012345678",
+      user: { id: "987654321098765432", username: "testuser" },
     });
   });
 
@@ -56,8 +56,8 @@ describe("ping command", () => {
         "logInfo",
         "Executing ping command",
         {
-          GuildId: "123456789",
-          UserId: "user123",
+          GuildId: "123456789012345678",
+          UserId: "987654321098765432",
         }
       );
     });
@@ -71,10 +71,14 @@ describe("ping command", () => {
 
       await execute(mockInteraction);
 
-      expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content: "❌ Error: Service container not initialized",
-        flags: MessageFlags.Ephemeral,
-      });
+      expect(mockInteraction.reply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringMatching(
+            /^❌ \*\*Unexpected Error\*\*.*Error ID:/s
+          ),
+          flags: MessageFlags.Ephemeral,
+        })
+      );
     });
 
     it("should handle unknown service error", async () => {
@@ -84,10 +88,14 @@ describe("ping command", () => {
 
       await execute(mockInteraction);
 
-      expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content: "❌ Error: Unknown service: ILoggerService",
-        flags: MessageFlags.Ephemeral,
-      });
+      expect(mockInteraction.reply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringMatching(
+            /^❌ \*\*Unexpected Error\*\*.*Error ID:/s
+          ),
+          flags: MessageFlags.Ephemeral,
+        })
+      );
     });
 
     it("should handle string error", async () => {
@@ -97,10 +105,14 @@ describe("ping command", () => {
 
       await execute(mockInteraction);
 
-      expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content: "❌ Error: Unknown error occurred",
-        flags: MessageFlags.Ephemeral,
-      });
+      expect(mockInteraction.reply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringMatching(
+            /^❌ \*\*Unexpected Error\*\*.*Error ID:/s
+          ),
+          flags: MessageFlags.Ephemeral,
+        })
+      );
     });
   });
 });

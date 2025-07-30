@@ -3,7 +3,9 @@ import { allCommands } from "./commands";
 import { initModels } from "./db/models";
 import { deployCommands, deployGuildCommands } from "./deploy-commands";
 import { initScheduledJobs } from "./scheduler";
-import { IConfigService, ILoggerService } from "./services/interfaces";
+import { IConfigService } from "./services/ConfigService";
+import { ErrorHandler } from "./services/ErrorHandler";
+import { ILoggerService } from "./services/LoggerService";
 import { ServiceContainer } from "./services/ServiceContainer";
 
 export const client = new Client({
@@ -57,21 +59,29 @@ client.on(Events.InteractionCreate, async (interaction) => {
       );
     } catch (error) {
       const container = ServiceContainer.getInstance();
-      const loggerService = container.get<ILoggerService>("ILoggerService");
-      loggerService.logError(error as Error);
-      const errorMessage = "There was an error while executing this command!";
-      if (interaction.replied || interaction.deferred) {
-        await interaction.followUp({
-          content: errorMessage,
-          flags: MessageFlags.Ephemeral,
-        });
-      } else {
-        await interaction.reply({
-          content: errorMessage,
-          flags: MessageFlags.Ephemeral,
-        });
-      }
+      const logger = container.get<ILoggerService>("ILoggerService");
+
+      // Use centralized error handling
+      await ErrorHandler.handleCommandError(
+        interaction,
+        error instanceof Error ? error : new Error(String(error)),
+        logger
+      );
     }
+  } else {
+    const container = ServiceContainer.getInstance();
+    const logger = container.get<ILoggerService>("ILoggerService");
+
+    logger.warn("Unknown command attempted", {
+      commandName: interaction.commandName,
+      guildId: interaction.guildId,
+      userId: interaction.user.id,
+    });
+
+    await interaction.reply({
+      content: "❌ Unknown command.",
+      flags: MessageFlags.Ephemeral,
+    });
   }
 });
 

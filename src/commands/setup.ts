@@ -6,7 +6,15 @@ import {
   MessageFlags,
 } from "discord.js";
 import { JiraConfig } from "../db/models";
-import { IJiraService } from "../services/interfaces";
+import {
+  ApplicationError,
+  ErrorHandler,
+  ErrorType,
+} from "../services/ErrorHandler";
+import { InputValidator } from "../services/InputValidator";
+import { IJiraService } from "../services/JiraService";
+import { ILoggerService } from "../services/LoggerService";
+import { IRateLimitService } from "../services/RateLimitService";
 import { ServiceContainer } from "../services/ServiceContainer";
 
 export const name = "setup";
@@ -50,60 +58,136 @@ export const data = new SlashCommandBuilder()
   );
 
 export async function execute(interaction: ChatInputCommandInteraction) {
-  await interaction.deferReply({ flags: MessageFlags.Ephemeral });
+  try {
+    const serviceContainer = ServiceContainer.getInstance();
+    const jiraService = serviceContainer.get<IJiraService>("IJiraService");
+    const logger = serviceContainer.get<ILoggerService>("ILoggerService");
+    const rateLimitService =
+      serviceContainer.get<IRateLimitService>("IRateLimitService");
 
-  const host = interaction.options.get("host", true);
-  const username = interaction.options.get("username", true);
-  const token = interaction.options.get("token", true);
-  const jql = interaction.options.get("jql", false);
-  const dailyHours =
-    (interaction.options.get("daily-hours", false)?.value as number) ?? 8;
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
-  const serviceContainer = ServiceContainer.getInstance();
-  const jiraService = serviceContainer.get<IJiraService>("IJiraService");
+    // Check rate limit for setup command
+    try {
+      rateLimitService.checkRateLimit(interaction.user.id, "setup");
+    } catch (error) {
+      await interaction.editReply({
+        content: `⏱️ **Rate Limited**: ${
+          error instanceof Error ? error.message : "Please try again later."
+        }`,
+      });
+      return;
+    }
 
-  const response = await jiraService.getServerInfo(
-    host.value as string,
-    username.value as string,
-    token.value as string
-  );
+    const host = interaction.options.get("host", true);
+    const username = interaction.options.get("username", true);
+    const token = interaction.options.get("token", true);
+    const jql = interaction.options.get("jql", false);
+    const dailyHours =
+      (interaction.options.get("daily-hours", false)?.value as number) ?? 8;
 
-  if (!response.ok) {
+    logger.info("Executing setup command", {
+      guildId: interaction.guildId,
+      userId: interaction.user.id,
+      host: host.value,
+    });
+
+    // Validate inputs using InputValidator
+    let validatedHost: string;
+    let validatedUsername: string;
+    let validatedToken: string;
+    let validatedJql: string | undefined;
+    let validatedDailyHours: number;
+
+    try {
+      // Validate Discord IDs
+      InputValidator.validateDiscordId(interaction.user.id, "User ID");
+      if (interaction.guildId) {
+        InputValidator.validateDiscordId(interaction.guildId, "Guild ID");
+      }
+
+      validatedHost = InputValidator.validateJiraHost(host.value as string);
+      validatedUsername = InputValidator.validateEmail(
+        username.value as string
+      );
+      validatedToken = InputValidator.validateApiToken(token.value as string);
+      validatedJql = InputValidator.validateJQL(jql?.value as string);
+      validatedDailyHours = InputValidator.validateDailyHours(dailyHours);
+    } catch (error) {
+      if (error instanceof Error) {
+        await interaction.editReply({
+          content: `❌ **Validation Error**: ${InputValidator.sanitizeInput(
+            error.message
+          )}`,
+        });
+        return;
+      }
+      throw error;
+    }
+
+    // Test Jira connection
+    try {
+      await jiraService.getServerInfo(
+        validatedHost,
+        validatedUsername,
+        validatedToken
+      );
+    } catch (error) {
+      if (error instanceof ApplicationError) {
+        throw error;
+      }
+      throw new ApplicationError(
+        "Failed to validate Jira connection",
+        ErrorType.JIRA_API_ERROR,
+        true,
+        undefined,
+        {
+          originalError: error instanceof Error ? error.message : String(error),
+        }
+      );
+    }
+
+    // Save configuration to database
+    const [config, created] = await JiraConfig.findOrCreate({
+      where: {
+        guildId: interaction.guildId!,
+        userId: interaction.user.id,
+      },
+      defaults: {
+        guildId: interaction.guildId!,
+        host: validatedHost,
+        username: validatedUsername,
+        token: validatedToken,
+        userId: interaction.user.id,
+        timeJqlOverride: validatedJql,
+        schedulePaused: false,
+        dailyHours: validatedDailyHours,
+      },
+    });
+
+    if (!created) {
+      config.host = validatedHost;
+      config.username = validatedUsername;
+      config.token = validatedToken;
+      config.timeJqlOverride = validatedJql;
+      config.dailyHours = validatedDailyHours;
+      await config.save();
+    }
+
+    logger.info("Jira configuration saved successfully", {
+      guildId: interaction.guildId,
+      userId: interaction.user.id,
+      created,
+    });
+
     await interaction.followUp({
-      content: `Failed to connect to Jira: ${response.statusText}`,
+      content: "✅ Your Jira configuration has been saved successfully!",
       flags: MessageFlags.Ephemeral,
     });
-    return;
+  } catch (error) {
+    await ErrorHandler.handleCommandError(
+      interaction,
+      error instanceof Error ? error : new Error(String(error))
+    );
   }
-
-  const [config, created] = await JiraConfig.findOrCreate({
-    where: {
-      guildId: interaction.guildId!,
-      userId: interaction.user.id,
-    },
-    defaults: {
-      guildId: interaction.guildId!,
-      host: host.value as string,
-      username: username.value as string,
-      token: token.value as string,
-      userId: interaction.user.id,
-      timeJqlOverride: jql?.value as string | undefined,
-      schedulePaused: false,
-      dailyHours: dailyHours,
-    },
-  });
-
-  if (!created) {
-    config.host = host.value as string;
-    config.username = username.value as string;
-    config.token = token.value as string;
-    config.timeJqlOverride = jql?.value as string | undefined;
-    config.dailyHours = dailyHours;
-    await config.save();
-  }
-
-  await interaction.followUp({
-    content: "Your Jira configuration has been saved.",
-    flags: MessageFlags.Ephemeral,
-  });
 }

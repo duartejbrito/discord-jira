@@ -33,8 +33,8 @@ describe("Info Command", () => {
 
     // Create mock interaction
     mockInteraction = createMockInteraction({
-      guildId: "123456789",
-      user: { id: "user123" },
+      guildId: "123456789012345678",
+      user: { id: "987654321098765432" },
     });
   });
 
@@ -58,8 +58,8 @@ describe("Info Command", () => {
       expect(mockServices.ILoggerService.logInfo).toHaveBeenCalledWith(
         "Executing info command",
         {
-          GuildId: "123456789",
-          UserId: "user123",
+          GuildId: "123456789012345678",
+          UserId: "987654321098765432",
         }
       );
     });
@@ -68,7 +68,7 @@ describe("Info Command", () => {
       await execute(mockInteraction);
 
       expect(mockJiraConfig.findOne).toHaveBeenCalledWith({
-        where: { guildId: "123456789", userId: "user123" },
+        where: { guildId: "123456789012345678", userId: "987654321098765432" },
       });
     });
   });
@@ -103,7 +103,7 @@ describe("Info Command", () => {
       const callArgs = (mockInteraction.reply as jest.Mock).mock.calls[0][0];
       expect(callArgs.content).toContain("https://test.atlassian.net");
       expect(callArgs.content).toContain("testuser@example.com");
-      expect(callArgs.content).toContain("test-token");
+      expect(callArgs.content).toContain("test-tok...***"); // Token is now masked
       expect(callArgs.content).toContain("custom-jql");
       expect(callArgs.content).toContain("Schedule Paused: No");
     });
@@ -114,8 +114,8 @@ describe("Info Command", () => {
       expect(mockServices.ILoggerService.logInfo).toHaveBeenCalledWith(
         "Executing info command",
         {
-          GuildId: "123456789",
-          UserId: "user123",
+          GuildId: "123456789012345678",
+          UserId: "987654321098765432",
         }
       );
     });
@@ -146,7 +146,17 @@ describe("Info Command", () => {
     it("should handle database errors gracefully", async () => {
       mockJiraConfig.findOne.mockRejectedValue(new Error("Database error"));
 
-      await expect(execute(mockInteraction)).rejects.toThrow("Database error");
+      await expect(execute(mockInteraction)).resolves.not.toThrow();
+
+      // Verify that an error response was sent to the user
+      expect(mockInteraction.reply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringMatching(
+            /^❌ \*\*Unexpected Error\*\*.*Error ID:/s
+          ),
+          flags: expect.any(Number),
+        })
+      );
     });
 
     it("should handle service container errors", async () => {
@@ -154,8 +164,16 @@ describe("Info Command", () => {
         throw new Error("Service container not initialized");
       });
 
-      await expect(execute(mockInteraction)).rejects.toThrow(
-        "Service container not initialized"
+      await expect(execute(mockInteraction)).resolves.not.toThrow();
+
+      // Verify that an error response was sent to the user
+      expect(mockInteraction.reply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringMatching(
+            /^❌ \*\*Unexpected Error\*\*.*Error ID:/s
+          ),
+          flags: expect.any(Number),
+        })
       );
     });
   });

@@ -1,8 +1,7 @@
 jest.mock("node-fetch");
 
 import fetch from "node-fetch";
-import { HttpService } from "../../src/services/HttpService";
-import { IHttpService } from "../../src/services/interfaces";
+import { IHttpService, HttpService } from "../../src/services/HttpService";
 import { createMockResponse } from "../test-utils";
 
 const mockFetch = fetch as jest.MockedFunction<typeof fetch>;

@@ -69,8 +69,8 @@ describe("Time Command", () => {
 
     // Create mock interaction with specific methods for time command
     mockInteraction = createMockInteraction({
-      guildId: "123456789",
-      user: { id: "user123" },
+      guildId: "123456789012345678",
+      user: { id: "987654321098765432" },
       editReply: jest.fn().mockResolvedValue({
         createMessageComponentCollector: jest.fn().mockReturnValue({
           on: jest.fn(),
@@ -122,7 +122,7 @@ describe("Time Command", () => {
       await execute(mockInteraction);
 
       expect(mockJiraConfig.findOne).toHaveBeenCalledWith({
-        where: { guildId: "123456789", userId: "user123" },
+        where: { guildId: "123456789012345678", userId: "987654321098765432" },
       });
     });
   });
@@ -139,8 +139,8 @@ describe("Time Command", () => {
 
       // Provide a valid config so weekend check can happen
       const mockConfig = {
-        guildId: "123456789",
-        userId: "user123",
+        guildId: "123456789012345678",
+        userId: "987654321098765432",
         host: "https://test.atlassian.net",
         username: "testuser@example.com",
         token: "token123",
@@ -166,8 +166,8 @@ describe("Time Command", () => {
 
   describe("when user has configuration and valid workday", () => {
     const mockConfig = {
-      guildId: "123456789",
-      userId: "user123",
+      guildId: "123456789012345678",
+      userId: "987654321098765432",
       host: "https://test.atlassian.net",
       username: "testuser@example.com",
       token: "test-token",
@@ -347,8 +347,8 @@ describe("Time Command", () => {
 
   describe("error handling", () => {
     const mockConfig = {
-      guildId: "123456789",
-      userId: "user123",
+      guildId: "123456789012345678",
+      userId: "987654321098765432",
       host: "https://test.atlassian.net",
       username: "testuser@example.com",
       token: "test-token",
@@ -390,22 +390,36 @@ describe("Time Command", () => {
         throw new Error("Service container not initialized");
       });
 
-      await expect(execute(mockInteraction)).rejects.toThrow(
-        "Service container not initialized"
+      await expect(execute(mockInteraction)).resolves.not.toThrow();
+
+      expect(mockInteraction.editReply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringMatching(
+            /^❌ \*\*Unexpected Error\*\*.*Error ID:/s
+          ),
+        })
       );
     });
 
     it("should handle database errors", async () => {
       mockJiraConfig.findOne.mockRejectedValue(new Error("Database error"));
 
-      await expect(execute(mockInteraction)).rejects.toThrow("Database error");
+      await expect(execute(mockInteraction)).resolves.not.toThrow();
+
+      expect(mockInteraction.editReply).toHaveBeenCalledWith(
+        expect.objectContaining({
+          content: expect.stringMatching(
+            /^❌ \*\*Unexpected Error\*\*.*Error ID:/s
+          ),
+        })
+      );
     });
   });
 
   describe("worklog submission", () => {
     const mockConfig = {
-      guildId: "123456789",
-      userId: "user123",
+      guildId: "123456789012345678",
+      userId: "987654321098765432",
       host: "https://test.atlassian.net",
       username: "testuser@example.com",
       token: "test-token",
@@ -476,7 +490,7 @@ describe("Time Command", () => {
       const filterFunction = collectorCall.filter;
 
       // Test that filter returns true for same user
-      const mockSameUserInteraction = { user: { id: "user123" } };
+      const mockSameUserInteraction = { user: { id: "987654321098765432" } };
       expect(filterFunction(mockSameUserInteraction)).toBe(true);
 
       // Test that filter returns false for different user
@@ -680,7 +694,7 @@ describe("Time Command", () => {
       // Mock interaction for submit button
       const mockButtonInteraction = {
         customId: "submit",
-        user: { id: "user123" },
+        user: { id: "987654321098765432" },
         update: jest.fn().mockResolvedValue({}),
       };
 

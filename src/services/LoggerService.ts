@@ -6,16 +6,37 @@ import {
   EmbedBuilder,
   SendableChannels,
 } from "discord.js";
-import { ILoggerService } from "./interfaces";
 
+/* eslint-disable no-unused-vars */
 export enum LogType {
-  /* eslint-disable no-unused-vars */
   INFO,
   WARN,
   ERROR,
   DEBUG,
-  /* eslint-enable no-unused-vars */
 }
+
+export interface ILoggerService {
+  // Core logging methods
+  info(message: string, details?: Record<string, unknown>): void;
+  warn(message: string, details?: Record<string, unknown>): void;
+  debug(message: string, details?: Record<string, unknown>): void;
+  error(error: Error | string, details?: Record<string, unknown>): void;
+
+  // Initialization method for Discord logging
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initialize(
+    client: unknown,
+    ownerLogChannelId: string,
+    discordLogging?: boolean
+  ): void;
+
+  // Backward compatibility methods (legacy interface)
+  logInfo(message: string, args?: Record<string, unknown>): void;
+  logWarn(message: string, args?: Record<string, unknown>): void;
+  logDebug(message: string, args?: Record<string, unknown>): void;
+  logError(message: string | Error, args?: Record<string, unknown>): void;
+}
+/* eslint-enable no-unused-vars */
 
 export class LoggerService implements ILoggerService {
   private static instance: ILoggerService;

@@ -1,6 +1,9 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { ILoggerService } from "../../src/services/interfaces";
-import { LoggerService, LogType } from "../../src/services/LoggerService";
+import {
+  ILoggerService,
+  LoggerService,
+  LogType,
+} from "../../src/services/LoggerService";
 
 // Mock colors/safe
 jest.mock("colors/safe", () => ({

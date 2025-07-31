@@ -3,6 +3,7 @@ import { MessageFlags } from "discord.js";
 import { execute, data, name } from "../../src/commands/setup";
 import { JiraConfig } from "../../src/db/models";
 import { ApplicationError, ErrorType } from "../../src/services/ErrorHandler";
+import { InputValidator } from "../../src/services/InputValidator";
 import { ServiceContainer } from "../../src/services/ServiceContainer";
 import {
   createMockInteraction,
@@ -15,6 +16,9 @@ const mockJiraConfig = JiraConfig as jest.Mocked<typeof JiraConfig>;
 
 // Mock the ServiceContainer
 jest.mock("../../src/services/ServiceContainer");
+
+// Mock InputValidator
+jest.mock("../../src/services/InputValidator");
 
 // Unmock SlashCommandBuilder for this test so we get actual command data
 jest.unmock("discord.js");
@@ -107,10 +111,50 @@ describe("Setup Command", () => {
     // Mock the ServiceContainer.getInstance method
     (ServiceContainer.getInstance as jest.Mock).mockReturnValue(mockContainer);
 
+    // Mock InputValidator methods with dynamic responses
+    (InputValidator.validateDiscordId as jest.Mock) = jest.fn();
+    (InputValidator.validateJiraHost as jest.Mock) = jest
+      .fn()
+      .mockImplementation((host: string) => {
+        // Return the host without adding https:// prefix if it's already clean
+        return host;
+      });
+    (InputValidator.validateEmail as jest.Mock) = jest
+      .fn()
+      .mockImplementation((email: string) => {
+        return email;
+      });
+    (InputValidator.validateApiToken as jest.Mock) = jest
+      .fn()
+      .mockImplementation((token: string) => {
+        return token;
+      });
+    (InputValidator.validateJQL as jest.Mock) = jest
+      .fn()
+      .mockImplementation((jql?: string) => {
+        // Return the actual JQL if provided, otherwise return undefined
+        return jql;
+      });
+    (InputValidator.validateDailyHours as jest.Mock) = jest
+      .fn()
+      .mockImplementation((hours?: number) => {
+        // Return the actual hours if provided, otherwise return 8 as default
+        return hours ?? 8;
+      });
+    (InputValidator.sanitizeInput as jest.Mock) = jest
+      .fn()
+      .mockImplementation((input: string) => input);
+
     // Create mock interaction
     mockInteraction = createMockInteraction({
       guildId: "123456789012345678",
-      user: { id: "987654321098765432" },
+      user: {
+        id: "987654321098765432",
+        username: "testuser",
+        displayAvatarURL: jest
+          .fn()
+          .mockReturnValue("https://example.com/avatar.png"),
+      },
       options: {
         get: jest.fn(),
       },
@@ -189,10 +233,18 @@ describe("Setup Command", () => {
     it("should confirm successful setup", async () => {
       await execute(mockInteraction);
 
-      expect(mockInteraction.followUp).toHaveBeenCalledWith({
-        content: "✅ Your Jira configuration has been saved successfully!",
-        flags: MessageFlags.Ephemeral,
-      });
+      expect(mockInteraction.followUp).toHaveBeenCalled();
+      const followUpCall = mockInteraction.followUp.mock.calls[0][0];
+      expect(followUpCall.embeds).toHaveLength(1);
+
+      // Check embed properties using .data pattern like in hours test
+      const embed = followUpCall.embeds[0];
+      const embedData = embed.data || embed;
+      expect(embedData.title).toBe("✅ Configuration Saved Successfully!");
+      expect(embedData.description).toBe(
+        "Your Jira configuration has been saved and tested successfully."
+      );
+      expect(followUpCall.flags).toBe(MessageFlags.Ephemeral);
     });
   });
 
@@ -234,10 +286,18 @@ describe("Setup Command", () => {
     it("should confirm successful update", async () => {
       await execute(mockInteraction);
 
-      expect(mockInteraction.followUp).toHaveBeenCalledWith({
-        content: "✅ Your Jira configuration has been saved successfully!",
-        flags: MessageFlags.Ephemeral,
-      });
+      expect(mockInteraction.followUp).toHaveBeenCalled();
+      const followUpCall = mockInteraction.followUp.mock.calls[0][0];
+      expect(followUpCall.embeds).toHaveLength(1);
+
+      // Check embed properties using .data pattern like in hours test
+      const embed = followUpCall.embeds[0];
+      const embedData = embed.data || embed;
+      expect(embedData.title).toBe("✅ Configuration Saved Successfully!");
+      expect(embedData.description).toBe(
+        "Your Jira configuration has been saved and tested successfully."
+      );
+      expect(followUpCall.flags).toBe(MessageFlags.Ephemeral);
     });
   });
 

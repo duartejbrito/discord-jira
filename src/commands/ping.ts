@@ -3,6 +3,7 @@ import {
   InteractionContextType,
   SlashCommandBuilder,
   MessageFlags,
+  EmbedBuilder,
 } from "discord.js";
 import { ErrorHandler } from "../services/ErrorHandler";
 import { InputValidator } from "../services/InputValidator";
@@ -39,8 +40,14 @@ export async function execute(interaction: CommandInteraction) {
       UserId: interaction.user.id,
     });
 
+    const embed = new EmbedBuilder()
+      .setTitle("🏓 Pong!")
+      .setDescription("Bot is responsive and working correctly")
+      .setColor(0x00ff00)
+      .setTimestamp();
+
     return interaction.reply({
-      content: "Pong!",
+      embeds: [embed],
       flags: MessageFlags.Ephemeral,
     });
   } catch (error) {

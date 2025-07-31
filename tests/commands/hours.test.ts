@@ -88,11 +88,14 @@ describe("Hours Command", () => {
       });
       expect(mockConfig.dailyHours).toBe(6);
       expect(mockConfig.save).toHaveBeenCalled();
-      expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content:
-          "Your daily hours have been updated to 6 hours. This will be used for automatic time distribution in scheduled jobs and the /time command when hours are not specified.",
-        flags: MessageFlags.Ephemeral,
-      });
+
+      const replyCall = mockInteraction.reply.mock.calls[0][0];
+      expect(replyCall.embeds).toBeDefined();
+      expect(replyCall.embeds.length).toBeGreaterThan(0);
+      expect(replyCall.embeds[0]).toBeDefined();
+      expect(replyCall.embeds[0].data.title).toBe("⏰ Daily Hours Updated");
+      expect(replyCall.embeds[0].data.description).toContain("6 hours");
+      expect(replyCall.flags).toBe(MessageFlags.Ephemeral);
     });
 
     it("should return error if no config exists", async () => {
@@ -101,11 +104,15 @@ describe("Hours Command", () => {
 
       await execute(mockInteraction);
 
-      expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content:
-          "No Jira configuration found for this user. Please run `/setup` first.",
-        flags: MessageFlags.Ephemeral,
-      });
+      const replyCallError = mockInteraction.reply.mock.calls[0][0];
+      expect(replyCallError.embeds).toBeDefined();
+      expect(replyCallError.embeds[0].data.title).toBe(
+        "⚠️ Configuration Not Found"
+      );
+      expect(replyCallError.embeds[0].data.description).toContain(
+        "No Jira configuration found"
+      );
+      expect(replyCallError.flags).toBe(MessageFlags.Ephemeral);
     });
 
     it("should log command execution", async () => {
@@ -150,11 +157,12 @@ describe("Hours Command", () => {
       await execute(mockInteraction);
 
       expect(mockConfig.dailyHours).toBe(4);
-      expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content:
-          "Your daily hours have been updated to 4 hours. This will be used for automatic time distribution in scheduled jobs and the /time command when hours are not specified.",
-        flags: MessageFlags.Ephemeral,
-      });
+
+      const replyCall4 = mockInteraction.reply.mock.calls[0][0];
+      expect(replyCall4.embeds).toBeDefined();
+      expect(replyCall4.embeds[0].data.title).toBe("⏰ Daily Hours Updated");
+      expect(replyCall4.embeds[0].data.description).toContain("4 hours");
+      expect(replyCall4.flags).toBe(MessageFlags.Ephemeral);
     });
 
     it("should handle boundary values correctly", async () => {
@@ -175,11 +183,12 @@ describe("Hours Command", () => {
       await execute(mockInteraction);
 
       expect(mockConfig.dailyHours).toBe(1);
-      expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content:
-          "Your daily hours have been updated to 1 hours. This will be used for automatic time distribution in scheduled jobs and the /time command when hours are not specified.",
-        flags: MessageFlags.Ephemeral,
-      });
+
+      const replyCall1 = mockInteraction.reply.mock.calls[0][0];
+      expect(replyCall1.embeds).toBeDefined();
+      expect(replyCall1.embeds[0].data.title).toBe("⏰ Daily Hours Updated");
+      expect(replyCall1.embeds[0].data.description).toContain("1 hours");
+      expect(replyCall1.flags).toBe(MessageFlags.Ephemeral);
 
       // Reset mocks for next test
       jest.clearAllMocks();
@@ -192,11 +201,12 @@ describe("Hours Command", () => {
       await execute(mockInteraction);
 
       expect(mockConfig.dailyHours).toBe(24);
-      expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content:
-          "Your daily hours have been updated to 24 hours. This will be used for automatic time distribution in scheduled jobs and the /time command when hours are not specified.",
-        flags: MessageFlags.Ephemeral,
-      });
+
+      const replyCall24 = mockInteraction.reply.mock.calls[0][0];
+      expect(replyCall24.embeds).toBeDefined();
+      expect(replyCall24.embeds[0].data.title).toBe("⏰ Daily Hours Updated");
+      expect(replyCall24.embeds[0].data.description).toContain("24 hours");
+      expect(replyCall24.flags).toBe(MessageFlags.Ephemeral);
     });
 
     it("should handle database save errors gracefully", async () => {

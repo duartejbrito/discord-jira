@@ -4,6 +4,7 @@ import {
   PermissionFlagsBits,
   SlashCommandBuilder,
   MessageFlags,
+  EmbedBuilder,
 } from "discord.js";
 import { JiraConfig } from "../db/models/JiraConfig";
 import { ErrorHandler } from "../services/ErrorHandler";
@@ -68,8 +69,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
         integer: true,
       });
     } catch (error) {
+      const errorEmbed = new EmbedBuilder()
+        .setTitle("❌ Validation Error")
+        .setDescription("Hours must be between 1 and 24.")
+        .setColor(0xff0000)
+        .setTimestamp();
+
       return interaction.reply({
-        content: "Hours must be between 1 and 24.",
+        embeds: [errorEmbed],
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -79,9 +86,22 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     });
 
     if (!config) {
+      const errorEmbed = new EmbedBuilder()
+        .setTitle("⚠️ Configuration Not Found")
+        .setDescription("No Jira configuration found for this user.")
+        .addFields([
+          {
+            name: "🔧 Next Step",
+            value:
+              "Please run `/setup` first to configure your Jira connection.",
+            inline: false,
+          },
+        ])
+        .setColor(0xffaa00)
+        .setTimestamp();
+
       return interaction.reply({
-        content:
-          "No Jira configuration found for this user. Please run `/setup` first.",
+        embeds: [errorEmbed],
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -89,8 +109,34 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     config.dailyHours = hours;
     await config.save();
 
+    const embed = new EmbedBuilder()
+      .setTitle("⏰ Daily Hours Updated")
+      .setDescription(
+        `Your daily hours have been successfully updated to **${hours} hours**.`
+      )
+      .setColor(0x00ff00)
+      .addFields([
+        {
+          name: "📊 Usage",
+          value:
+            "This will be used for automatic time distribution in scheduled jobs and the `/time` command when hours are not specified.",
+          inline: false,
+        },
+        {
+          name: "🔄 Next Steps",
+          value:
+            "Use `/time` to track your work or `/pause` to control automatic logging.",
+          inline: false,
+        },
+      ])
+      .setTimestamp()
+      .setFooter({
+        text: `Configured by ${interaction.user.username}`,
+        iconURL: interaction.user.displayAvatarURL(),
+      });
+
     return interaction.reply({
-      content: `Your daily hours have been updated to ${hours} hours. This will be used for automatic time distribution in scheduled jobs and the /time command when hours are not specified.`,
+      embeds: [embed],
       flags: MessageFlags.Ephemeral,
     });
   } catch (error) {

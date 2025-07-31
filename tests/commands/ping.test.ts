@@ -43,7 +43,13 @@ describe("ping command", () => {
       await execute(mockInteraction);
 
       expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content: "Pong!",
+        embeds: expect.arrayContaining([
+          expect.objectContaining({
+            title: "🏓 Pong!",
+            description: "Bot is responsive and working correctly",
+            color: 0x00ff00,
+          }),
+        ]),
         flags: MessageFlags.Ephemeral,
       });
     });

@@ -4,6 +4,7 @@ import {
   PermissionFlagsBits,
   SlashCommandBuilder,
   MessageFlags,
+  EmbedBuilder,
 } from "discord.js";
 import { JiraConfig } from "../db/models";
 import {
@@ -71,10 +72,16 @@ export async function execute(interaction: ChatInputCommandInteraction) {
     try {
       rateLimitService.checkRateLimit(interaction.user.id, "setup");
     } catch (error) {
-      await interaction.editReply({
-        content: `⏱️ **Rate Limited**: ${
+      const rateLimitEmbed = new EmbedBuilder()
+        .setTitle("⏱️ Rate Limited")
+        .setDescription(
           error instanceof Error ? error.message : "Please try again later."
-        }`,
+        )
+        .setColor(0xffaa00)
+        .setTimestamp();
+
+      await interaction.editReply({
+        embeds: [rateLimitEmbed],
       });
       return;
     }
@@ -115,10 +122,14 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       validatedDailyHours = InputValidator.validateDailyHours(dailyHours);
     } catch (error) {
       if (error instanceof Error) {
+        const validationEmbed = new EmbedBuilder()
+          .setTitle("❌ Validation Error")
+          .setDescription(InputValidator.sanitizeInput(error.message))
+          .setColor(0xff0000)
+          .setTimestamp();
+
         await interaction.editReply({
-          content: `❌ **Validation Error**: ${InputValidator.sanitizeInput(
-            error.message
-          )}`,
+          embeds: [validationEmbed],
         });
         return;
       }
@@ -180,8 +191,54 @@ export async function execute(interaction: ChatInputCommandInteraction) {
       created,
     });
 
+    const successEmbed = new EmbedBuilder()
+      .setTitle("✅ Configuration Saved Successfully!")
+      .setDescription(
+        "Your Jira configuration has been saved and tested successfully."
+      )
+      .addFields([
+        {
+          name: "🌐 Host",
+          value: `\`${validatedHost}\``,
+          inline: true,
+        },
+        {
+          name: "👤 Username",
+          value: `\`${validatedUsername}\``,
+          inline: true,
+        },
+        {
+          name: "📊 Daily Hours",
+          value: `\`${validatedDailyHours} hours\``,
+          inline: true,
+        },
+        ...(validatedJql
+          ? [
+              {
+                name: "🔍 Custom JQL",
+                value: `\`${validatedJql}\``,
+                inline: false,
+              },
+            ]
+          : []),
+        {
+          name: "🚀 Next Steps",
+          value:
+            "• Use `/time` to track your work\n• Use `/hours` to update daily hours\n• Use `/pause` to control automatic logging\n• Use `/info` to view your configuration",
+          inline: false,
+        },
+      ])
+      .setColor(0x00ff00)
+      .setTimestamp()
+      .setFooter({
+        text: `${created ? "Created" : "Updated"} by ${
+          interaction.user.username
+        }`,
+        iconURL: interaction.user.displayAvatarURL(),
+      });
+
     await interaction.followUp({
-      content: "✅ Your Jira configuration has been saved successfully!",
+      embeds: [successEmbed],
       flags: MessageFlags.Ephemeral,
     });
   } catch (error) {

@@ -59,7 +59,13 @@ export function setupServiceContainerMock() {
 export function createMockInteraction(overrides: Partial<any> = {}): any {
   const mockInteraction = {
     guildId: "123456789012345678",
-    user: { id: "987654321098765432", username: "testuser" },
+    user: {
+      id: "987654321098765432",
+      username: "testuser",
+      displayAvatarURL: jest
+        .fn()
+        .mockReturnValue("https://example.com/avatar.png"),
+    },
     guild: { id: "123456789012345678" },
     channelId: "987654321098765432",
     deferReply: jest.fn(),

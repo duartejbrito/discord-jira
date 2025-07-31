@@ -3,6 +3,7 @@ import {
   InteractionContextType,
   SlashCommandBuilder,
   MessageFlags,
+  EmbedBuilder,
 } from "discord.js";
 import { JiraConfig } from "../db/models/JiraConfig";
 import { ErrorHandler } from "../services/ErrorHandler";
@@ -32,8 +33,14 @@ export async function execute(interaction: CommandInteraction) {
         InputValidator.validateDiscordId(interaction.guildId, "Guild ID");
       }
     } catch (error) {
+      const errorEmbed = new EmbedBuilder()
+        .setTitle("❌ Invalid Input")
+        .setDescription("Invalid Discord ID format.")
+        .setColor(0xff0000)
+        .setTimestamp();
+
       return interaction.reply({
-        content: "Invalid Discord ID format.",
+        embeds: [errorEmbed],
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -46,8 +53,15 @@ export async function execute(interaction: CommandInteraction) {
         rateLimitError instanceof Error
           ? rateLimitError.message
           : "Rate limit exceeded";
+
+      const rateLimitEmbed = new EmbedBuilder()
+        .setTitle("⏱️ Rate Limited")
+        .setDescription(`${errorMessage}`)
+        .setColor(0xffaa00)
+        .setTimestamp();
+
       return interaction.reply({
-        content: `Rate limit exceeded: ${errorMessage}`,
+        embeds: [rateLimitEmbed],
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -62,23 +76,71 @@ export async function execute(interaction: CommandInteraction) {
     });
 
     if (config) {
+      const embed = new EmbedBuilder()
+        .setTitle("📋 Your Jira Configuration")
+        .setDescription("Here are your current Jira integration settings:")
+        .setColor(0x0099ff)
+        .addFields([
+          {
+            name: "🌐 Host",
+            value: `\`${InputValidator.sanitizeInput(config.host)}\``,
+            inline: true,
+          },
+          {
+            name: "👤 Username",
+            value: `\`${InputValidator.sanitizeInput(config.username)}\``,
+            inline: true,
+          },
+          {
+            name: "🔑 API Token",
+            value: `\`${config.token.substring(0, 8)}...***\``,
+            inline: true,
+          },
+          {
+            name: "📊 Daily Hours",
+            value: `\`${config.dailyHours || 8} hours\``,
+            inline: true,
+          },
+          {
+            name: "⏸️ Schedule Status",
+            value: config.schedulePaused ? "🔴 Paused" : "🟢 Active",
+            inline: true,
+          },
+          {
+            name: "🔍 Time JQL Override",
+            value: config.timeJqlOverride
+              ? `\`${InputValidator.sanitizeInput(config.timeJqlOverride)}\``
+              : "`None`",
+            inline: false,
+          },
+        ])
+        .setTimestamp()
+        .setFooter({
+          text: `Configuration for ${interaction.user.username}`,
+          iconURL: interaction.user.displayAvatarURL(),
+        });
+
       return interaction.reply({
-        content: `Here is your Jira configuration information:
-- Host: ${InputValidator.sanitizeInput(config.host)}
-- Username: ${InputValidator.sanitizeInput(config.username)}
-- Jira API Token: ${config.token.substring(0, 8)}...***
-- Time JQL Override: ${
-          config.timeJqlOverride
-            ? InputValidator.sanitizeInput(config.timeJqlOverride)
-            : "None"
-        }
-- Schedule Paused: ${config.schedulePaused ? "Yes" : "No"}
-- Daily Hours: ${config.dailyHours || 8} hours`,
+        embeds: [embed],
         flags: MessageFlags.Ephemeral,
       });
     } else {
+      const errorEmbed = new EmbedBuilder()
+        .setTitle("⚠️ Configuration Not Found")
+        .setDescription("No Jira configuration found for this user.")
+        .addFields([
+          {
+            name: "🔧 Next Step",
+            value:
+              "Please run `/setup` first to configure your Jira connection.",
+            inline: false,
+          },
+        ])
+        .setColor(0xffaa00)
+        .setTimestamp();
+
       return interaction.reply({
-        content: "No Jira configuration found for this user.",
+        embeds: [errorEmbed],
         flags: MessageFlags.Ephemeral,
       });
     }

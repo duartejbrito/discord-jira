@@ -44,6 +44,7 @@ const mockUser = {
   discriminator: "0001",
   tag: "testuser#0001",
   displayName: "Test User",
+  displayAvatarURL: jest.fn().mockReturnValue("https://example.com/avatar.png"),
 };
 
 const mockClient = {
@@ -103,6 +104,53 @@ const mockSlashCommandBuilder = {
   }),
 };
 
+const createMockEmbedBuilder = () => ({
+  title: "",
+  description: "",
+  color: 0,
+  fields: [],
+  timestamp: null,
+  footer: null,
+  setTitle: jest.fn().mockImplementation(function (this: any, title: string) {
+    this.title = title;
+    return this;
+  }),
+  setDescription: jest
+    .fn()
+    .mockImplementation(function (this: any, description: string) {
+      this.description = description;
+      return this;
+    }),
+  setColor: jest.fn().mockImplementation(function (this: any, color: number) {
+    this.color = color;
+    return this;
+  }),
+  addFields: jest.fn().mockImplementation(function (this: any, fields: any) {
+    this.fields = Array.isArray(fields) ? fields : [fields];
+    return this;
+  }),
+  setTimestamp: jest
+    .fn()
+    .mockImplementation(function (this: any, timestamp?: Date | string) {
+      this.timestamp = timestamp || new Date().toISOString();
+      return this;
+    }),
+  setFooter: jest.fn().mockImplementation(function (this: any, footer: any) {
+    this.footer = footer;
+    return this;
+  }),
+  toJSON: jest.fn().mockImplementation(function (this: any) {
+    return {
+      title: this.title,
+      description: this.description,
+      color: this.color,
+      fields: this.fields,
+      timestamp: this.timestamp,
+      footer: this.footer,
+    };
+  }),
+});
+
 // Mock the main Discord.js exports
 module.exports = {
   Client: jest.fn().mockImplementation(() => mockClient),
@@ -128,6 +176,13 @@ module.exports = {
   SlashCommandBuilder: jest
     .fn()
     .mockImplementation(() => mockSlashCommandBuilder),
+  EmbedBuilder: jest.fn().mockImplementation(() => createMockEmbedBuilder()),
+  Colors: {
+    Blue: 0x3498db,
+    Yellow: 0xf1c40f,
+    Red: 0xe74c3c,
+    Blurple: 0x5865f2,
+  },
   MessageFlags: {
     Ephemeral: 64,
   },

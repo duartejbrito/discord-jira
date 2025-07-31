@@ -3,6 +3,7 @@ import {
   InteractionContextType,
   SlashCommandBuilder,
   MessageFlags,
+  EmbedBuilder,
 } from "discord.js";
 import { JiraConfig } from "../db/models";
 import { ErrorHandler } from "../services/ErrorHandler";
@@ -32,8 +33,14 @@ export async function execute(interaction: CommandInteraction) {
         InputValidator.validateDiscordId(interaction.guildId, "Guild ID");
       }
     } catch (error) {
+      const errorEmbed = new EmbedBuilder()
+        .setTitle("❌ Invalid Input")
+        .setDescription("Invalid Discord ID format.")
+        .setColor(0xff0000)
+        .setTimestamp();
+
       return interaction.reply({
-        content: "Invalid Discord ID format.",
+        embeds: [errorEmbed],
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -46,8 +53,15 @@ export async function execute(interaction: CommandInteraction) {
         rateLimitError instanceof Error
           ? rateLimitError.message
           : "Rate limit exceeded";
+
+      const rateLimitEmbed = new EmbedBuilder()
+        .setTitle("⏱️ Rate Limited")
+        .setDescription(`${errorMessage}`)
+        .setColor(0xffaa00)
+        .setTimestamp();
+
       return interaction.reply({
-        content: `Rate limit exceeded: ${errorMessage}`,
+        embeds: [rateLimitEmbed],
         flags: MessageFlags.Ephemeral,
       });
     }
@@ -62,17 +76,63 @@ export async function execute(interaction: CommandInteraction) {
     });
 
     if (config) {
-      await config.update({ schedulePaused: !config.schedulePaused });
+      const newPausedState = !config.schedulePaused;
+      await config.update({ schedulePaused: newPausedState });
+
+      const isPaused = newPausedState;
+      const embed = new EmbedBuilder()
+        .setTitle(
+          isPaused ? "⏸️ Scheduled Jobs Paused" : "▶️ Scheduled Jobs Resumed"
+        )
+        .setDescription(
+          isPaused
+            ? "Automatic time logging has been **paused**. You can still manually track time using `/time`."
+            : "Automatic time logging has been **resumed**. The bot will continue tracking your work."
+        )
+        .setColor(isPaused ? 0xffaa00 : 0x00ff00)
+        .addFields([
+          {
+            name: "📊 Status",
+            value: isPaused ? "🔴 Paused" : "🟢 Active",
+            inline: true,
+          },
+          {
+            name: "🔄 Toggle Again",
+            value: `Use \`/pause\` to ${
+              isPaused ? "resume" : "pause"
+            } automatic logging.`,
+            inline: true,
+          },
+        ])
+        .setTimestamp()
+        .setFooter({
+          text: `${isPaused ? "Paused" : "Resumed"} by ${
+            interaction.user.username
+          }`,
+          iconURL: interaction.user.displayAvatarURL(),
+        });
 
       return interaction.reply({
-        content: `Scheduled jobs have been ${
-          config?.schedulePaused ? "paused" : "resumed"
-        }.`,
+        embeds: [embed],
         flags: MessageFlags.Ephemeral,
       });
     } else {
+      const errorEmbed = new EmbedBuilder()
+        .setTitle("⚠️ Configuration Not Found")
+        .setDescription("No Jira configuration found for this user.")
+        .addFields([
+          {
+            name: "🔧 Next Step",
+            value:
+              "Please run `/setup` first to configure your Jira connection.",
+            inline: false,
+          },
+        ])
+        .setColor(0xffaa00)
+        .setTimestamp();
+
       return interaction.reply({
-        content: "No Jira configuration found for this user.",
+        embeds: [errorEmbed],
         flags: MessageFlags.Ephemeral,
       });
     }

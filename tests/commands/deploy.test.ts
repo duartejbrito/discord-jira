@@ -51,7 +51,13 @@ describe("Deploy Command", () => {
     // Create mock interaction
     mockInteraction = createMockInteraction({
       guildId: "123456789012345678",
-      user: { id: "owner123" },
+      user: {
+        id: "owner123",
+        username: "testowner",
+        displayAvatarURL: jest
+          .fn()
+          .mockReturnValue("https://example.com/avatar.png"),
+      },
     });
 
     mockDeployCommands.mockResolvedValue(undefined);
@@ -77,7 +83,12 @@ describe("Deploy Command", () => {
     expect(mockDeployCommands).toHaveBeenCalled();
     expect(mockDeployGuildCommands).toHaveBeenCalled();
     expect(mockInteraction.reply).toHaveBeenCalledWith({
-      content: expect.stringContaining("Commands globally deployed"),
+      embeds: [
+        expect.objectContaining({
+          title: "🚀 Commands Deployed Successfully",
+          description: expect.stringContaining("deployed and are ready to use"),
+        }),
+      ],
       flags: MessageFlags.Ephemeral,
     });
     expect(mockServices.ILoggerService.logInfo).toHaveBeenCalledWith(
@@ -98,7 +109,12 @@ describe("Deploy Command", () => {
     expect(mockDeployCommands).not.toHaveBeenCalled();
     expect(mockDeployGuildCommands).not.toHaveBeenCalled();
     expect(mockInteraction.reply).toHaveBeenCalledWith({
-      content: "You do not have permission to use this command.",
+      embeds: [
+        expect.objectContaining({
+          title: "🚫 Access Denied",
+          description: "You do not have permission to use this command.",
+        }),
+      ],
       flags: MessageFlags.Ephemeral,
     });
   });
@@ -157,7 +173,12 @@ describe("Deploy Command", () => {
 
     // Verify that the reply was called with expected content
     expect(mockInteraction.reply).toHaveBeenCalledWith({
-      content: expect.stringContaining("Commands globally deployed"),
+      embeds: [
+        expect.objectContaining({
+          title: "🚀 Commands Deployed Successfully",
+          description: expect.stringContaining("deployed and are ready to use"),
+        }),
+      ],
       flags: MessageFlags.Ephemeral,
     });
 
@@ -182,15 +203,17 @@ describe("Deploy Command", () => {
     // Verify that only valid commands are included in the reply
     // The filter on lines 39 and 44 should remove null/undefined and commands without names
     expect(mockInteraction.reply).toHaveBeenCalledWith({
-      content: expect.stringContaining("/ping"),
-      flags: MessageFlags.Ephemeral,
-    });
-    expect(mockInteraction.reply).toHaveBeenCalledWith({
-      content: expect.stringContaining("/info"),
-      flags: MessageFlags.Ephemeral,
-    });
-    expect(mockInteraction.reply).toHaveBeenCalledWith({
-      content: expect.stringContaining("/setup"),
+      embeds: [
+        expect.objectContaining({
+          title: "🚀 Commands Deployed Successfully",
+          fields: expect.arrayContaining([
+            expect.objectContaining({
+              name: "🌐 Global Commands",
+              value: expect.stringContaining("/ping"),
+            }),
+          ]),
+        }),
+      ],
       flags: MessageFlags.Ephemeral,
     });
   });

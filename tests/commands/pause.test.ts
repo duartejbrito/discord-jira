@@ -34,7 +34,13 @@ describe("Pause Command", () => {
     // Create mock interaction
     mockInteraction = createMockInteraction({
       guildId: "123456789012345678",
-      user: { id: "987654321098765432" },
+      user: {
+        id: "987654321098765432",
+        username: "testuser",
+        displayAvatarURL: jest
+          .fn()
+          .mockReturnValue("https://example.com/avatar.png"),
+      },
     });
   });
 
@@ -47,7 +53,12 @@ describe("Pause Command", () => {
       await execute(mockInteraction);
 
       expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content: "No Jira configuration found for this user.",
+        embeds: [
+          expect.objectContaining({
+            title: "⚠️ Configuration Not Found",
+            description: "No Jira configuration found for this user.",
+          }),
+        ],
         flags: MessageFlags.Ephemeral,
       });
     });
@@ -97,10 +108,14 @@ describe("Pause Command", () => {
     it("should confirm the pause action", async () => {
       await execute(mockInteraction);
 
-      // The message is based on the old state, so if it was false (not paused),
-      // it shows "resumed" because config.schedulePaused is still false when the message is generated
+      // The config was NOT paused (false), so after updating it becomes paused (true)
       expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content: "Scheduled jobs have been resumed.",
+        embeds: [
+          expect.objectContaining({
+            title: "⏸️ Scheduled Jobs Paused",
+            description: expect.stringContaining("paused"),
+          }),
+        ],
         flags: MessageFlags.Ephemeral,
       });
     });
@@ -142,10 +157,14 @@ describe("Pause Command", () => {
     it("should confirm the resume action", async () => {
       await execute(mockInteraction);
 
-      // The message is based on the old state, so if it was true (paused),
-      // it shows "paused" because config.schedulePaused is still true when the message is generated
+      // The config was paused (true), so after updating it becomes unpaused (false)
       expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content: "Scheduled jobs have been paused.",
+        embeds: [
+          expect.objectContaining({
+            title: "▶️ Scheduled Jobs Resumed",
+            description: expect.stringContaining("resumed"),
+          }),
+        ],
         flags: MessageFlags.Ephemeral,
       });
     });

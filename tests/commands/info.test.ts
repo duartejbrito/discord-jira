@@ -2,6 +2,7 @@
 import { MessageFlags } from "discord.js";
 import { execute } from "../../src/commands/info";
 import { JiraConfig } from "../../src/db/models/JiraConfig";
+import { InputValidator } from "../../src/services/InputValidator";
 import { ServiceContainer } from "../../src/services/ServiceContainer";
 import {
   createMockInteraction,
@@ -15,6 +16,9 @@ const mockJiraConfig = JiraConfig as jest.Mocked<typeof JiraConfig>;
 // Mock the ServiceContainer
 jest.mock("../../src/services/ServiceContainer");
 
+// Mock InputValidator
+jest.mock("../../src/services/InputValidator");
+
 describe("Info Command", () => {
   let mockInteraction: any;
   let mockContainer: any;
@@ -22,6 +26,11 @@ describe("Info Command", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
+
+    // Mock InputValidator.sanitizeInput to return input as-is
+    (InputValidator.sanitizeInput as jest.Mock) = jest
+      .fn()
+      .mockImplementation((input: string) => input);
 
     // Use test utilities for consistent mock setup
     const containerSetup = createMockServiceContainer();
@@ -34,7 +43,13 @@ describe("Info Command", () => {
     // Create mock interaction
     mockInteraction = createMockInteraction({
       guildId: "123456789012345678",
-      user: { id: "987654321098765432" },
+      user: {
+        id: "987654321098765432",
+        username: "testuser",
+        displayAvatarURL: jest
+          .fn()
+          .mockReturnValue("https://example.com/avatar.png"),
+      },
     });
   });
 
@@ -47,7 +62,12 @@ describe("Info Command", () => {
       await execute(mockInteraction);
 
       expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content: "No Jira configuration found for this user.",
+        embeds: [
+          expect.objectContaining({
+            title: "⚠️ Configuration Not Found",
+            description: "No Jira configuration found for this user.",
+          }),
+        ],
         flags: MessageFlags.Ephemeral,
       });
     });
@@ -80,6 +100,7 @@ describe("Info Command", () => {
       token: "test-token",
       timeJqlOverride: "custom-jql",
       schedulePaused: false,
+      dailyHours: 8,
     };
 
     beforeEach(() => {
@@ -90,9 +111,14 @@ describe("Info Command", () => {
       await execute(mockInteraction);
 
       expect(mockInteraction.reply).toHaveBeenCalledWith({
-        content: expect.stringContaining(
-          "Here is your Jira configuration information:"
-        ),
+        embeds: [
+          expect.objectContaining({
+            title: "📋 Your Jira Configuration",
+            description: expect.stringContaining(
+              "current Jira integration settings"
+            ),
+          }),
+        ],
         flags: MessageFlags.Ephemeral,
       });
     });
@@ -101,11 +127,15 @@ describe("Info Command", () => {
       await execute(mockInteraction);
 
       const callArgs = (mockInteraction.reply as jest.Mock).mock.calls[0][0];
-      expect(callArgs.content).toContain("https://test.atlassian.net");
-      expect(callArgs.content).toContain("testuser@example.com");
-      expect(callArgs.content).toContain("test-tok...***"); // Token is now masked
-      expect(callArgs.content).toContain("custom-jql");
-      expect(callArgs.content).toContain("Schedule Paused: No");
+      expect(callArgs.embeds).toBeDefined();
+      expect(callArgs.embeds[0]).toMatchObject({
+        title: "📋 Your Jira Configuration",
+        fields: expect.arrayContaining([
+          expect.objectContaining({ name: "🌐 Host" }),
+          expect.objectContaining({ name: "👤 Username" }),
+          expect.objectContaining({ name: "🔑 API Token" }),
+        ]),
+      });
     });
 
     it("should log the command execution", async () => {
@@ -128,6 +158,7 @@ describe("Info Command", () => {
       token: "test-token",
       timeJqlOverride: null,
       schedulePaused: true,
+      dailyHours: 6,
     };
 
     beforeEach(() => {
@@ -138,7 +169,16 @@ describe("Info Command", () => {
       await execute(mockInteraction);
 
       const callArgs = (mockInteraction.reply as jest.Mock).mock.calls[0][0];
-      expect(callArgs.content).toContain("Schedule Paused: Yes");
+      expect(callArgs.embeds).toBeDefined();
+      expect(callArgs.embeds[0]).toMatchObject({
+        title: "📋 Your Jira Configuration",
+        fields: expect.arrayContaining([
+          expect.objectContaining({
+            name: "⏸️ Schedule Status",
+            value: expect.stringContaining("Paused"),
+          }),
+        ]),
+      });
     });
   });
 

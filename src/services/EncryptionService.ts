@@ -1,4 +1,5 @@
 import * as crypto from "crypto";
+import { IConfigService } from "./ConfigService";
 import { ApplicationError, ErrorType } from "./ErrorHandler";
 
 /* eslint-disable no-unused-vars */
@@ -23,7 +24,9 @@ export class EncryptionService implements IEncryptionService {
 
   private readonly encryptionKey: Buffer;
 
-  constructor(secretKey?: string) {
+  constructor(configService: IConfigService) {
+    const secretKey = configService.getEncryptionSecretKey();
+
     if (secretKey) {
       // Derive key from provided secret
       this.encryptionKey = crypto.scryptSync(

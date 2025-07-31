@@ -15,6 +15,7 @@ export interface IConfigService {
   getOwnerLogChannelId(): string | undefined;
   getDatabaseUrl(): string;
   getPgConnectionString(): string | undefined;
+  getEncryptionSecretKey(): string | undefined;
   isDiscordLoggingEnabled(): boolean;
   isPgLoggingEnabled(): boolean;
   isProduction(): boolean;
@@ -86,6 +87,10 @@ export class ConfigService implements IConfigService {
 
   getPgConnectionString(): string | undefined {
     return this.get("PG_CONNECTION_STRING");
+  }
+
+  getEncryptionSecretKey(): string | undefined {
+    return this.get("ENCRYPTION_SECRET_KEY");
   }
 
   isDiscordLoggingEnabled(): boolean {

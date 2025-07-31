@@ -1,7 +1,28 @@
 import { Sequelize } from "sequelize";
 import { JiraConfig } from "../../../src/db/models/JiraConfig";
+import { IConfigService } from "../../../src/services/ConfigService";
 import { EncryptionService } from "../../../src/services/EncryptionService";
 import { ServiceContainer } from "../../../src/services/ServiceContainer";
+
+// Mock ConfigService for tests
+const createMockConfigService = (): IConfigService => ({
+  get: jest.fn(),
+  getRequired: jest.fn(),
+  getDiscordToken: jest.fn(),
+  getDiscordClientId: jest.fn(),
+  getClientId: jest.fn(),
+  getOwnerUserId: jest.fn(),
+  getOwnerGuildId: jest.fn(),
+  getOwnerLogChannelId: jest.fn(),
+  getDatabaseUrl: jest.fn(),
+  getPgConnectionString: jest.fn(),
+  getEncryptionSecretKey: jest.fn().mockReturnValue("test-secret-key"),
+  isDiscordLoggingEnabled: jest.fn(),
+  isPgLoggingEnabled: jest.fn(),
+  isProduction: jest.fn(),
+  isDevelopment: jest.fn(),
+  isTest: jest.fn(),
+});
 
 describe("JiraConfig Model", () => {
   let sequelize: Sequelize;
@@ -16,7 +37,11 @@ describe("JiraConfig Model", () => {
   beforeEach(async () => {
     // Initialize services
     const serviceContainer = ServiceContainer.getInstance();
-    serviceContainer.register("IEncryptionService", new EncryptionService());
+    const mockConfig = createMockConfigService();
+    serviceContainer.register(
+      "IEncryptionService",
+      new EncryptionService(mockConfig)
+    );
 
     // Initialize the model
     JiraConfig.initModel(sequelize);

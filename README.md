@@ -77,6 +77,9 @@ OWNER_GUILD_ID=your_guild_id_for_owner_commands
 OWNER_ID=your_discord_user_id
 OWNER_LOG_CHANNEL_ID=channel_id_for_logs
 
+# Security Configuration
+ENCRYPTION_SECRET_KEY=your_32_character_secret_key_here
+
 # Logging Configuration
 DISCORD_LOGGING=true
 PG_LOGGING=false
@@ -148,6 +151,29 @@ docker run --env-file .env discord-jira
 1. Generate an API token from your [Atlassian Account Settings](https://id.atlassian.com/manage-profile/security/api-tokens)
 2. Use the `/setup` command in Discord to configure your connection
 3. Optionally provide a JQL query to filter which issues appear in your time tracking
+
+### Security Configuration
+
+For production deployments, it's highly recommended to set the `ENCRYPTION_SECRET_KEY` environment variable:
+
+```env
+ENCRYPTION_SECRET_KEY=your_32_character_secret_key_here
+```
+
+- **Purpose**: This key is used for AES-256-GCM encryption of sensitive data (API tokens, passwords)
+- **Generation**: Use a cryptographically secure 32+ character string
+- **Best Practice**: Generate a unique key for each environment (dev, staging, production)
+- **Fallback**: If not provided, the service will generate a random key (not recommended for production)
+
+Example of generating a secure key:
+
+```bash
+# Using OpenSSL
+openssl rand -hex 32
+
+# Using Node.js
+node -e "console.log(require('crypto').randomBytes(32).toString('hex'))"
+```
 
 ## 📅 Automated Scheduling
 

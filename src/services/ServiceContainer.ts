@@ -92,7 +92,7 @@ export class ServiceContainer {
       rateLimitService
     );
 
-    const encryptionService = new EncryptionService();
+    const encryptionService = new EncryptionService(configService);
     container.register<IEncryptionService>(
       "IEncryptionService",
       encryptionService

@@ -1,5 +1,29 @@
+import { IConfigService } from "../../src/services/ConfigService";
 import { EncryptionService } from "../../src/services/EncryptionService";
 import { ApplicationError, ErrorType } from "../../src/services/ErrorHandler";
+
+// Mock ConfigService
+const createMockConfigService = (secretKey?: string): IConfigService => ({
+  get: jest.fn().mockImplementation((key: string) => {
+    if (key === "ENCRYPTION_SECRET_KEY") return secretKey;
+    return undefined;
+  }),
+  getRequired: jest.fn(),
+  getDiscordToken: jest.fn(),
+  getDiscordClientId: jest.fn(),
+  getClientId: jest.fn(),
+  getOwnerUserId: jest.fn(),
+  getOwnerGuildId: jest.fn(),
+  getOwnerLogChannelId: jest.fn(),
+  getDatabaseUrl: jest.fn(),
+  getPgConnectionString: jest.fn(),
+  getEncryptionSecretKey: jest.fn().mockReturnValue(secretKey),
+  isDiscordLoggingEnabled: jest.fn(),
+  isPgLoggingEnabled: jest.fn(),
+  isProduction: jest.fn(),
+  isDevelopment: jest.fn(),
+  isTest: jest.fn(),
+});
 
 describe("EncryptionService", () => {
   let encryptionService: EncryptionService;
@@ -7,23 +31,28 @@ describe("EncryptionService", () => {
   const testData = "sensitive-test-data";
 
   beforeEach(() => {
-    encryptionService = new EncryptionService(testSecret);
+    const mockConfig = createMockConfigService(testSecret);
+    encryptionService = new EncryptionService(mockConfig);
   });
 
   describe("constructor", () => {
     it("should create instance with provided secret key", () => {
-      const service = new EncryptionService(testSecret);
+      const mockConfig = createMockConfigService(testSecret);
+      const service = new EncryptionService(mockConfig);
       expect(service).toBeInstanceOf(EncryptionService);
     });
 
     it("should create instance without secret key (random key)", () => {
-      const service = new EncryptionService();
+      const mockConfig = createMockConfigService(); // No secret key
+      const service = new EncryptionService(mockConfig);
       expect(service).toBeInstanceOf(EncryptionService);
     });
 
     it("should create different instances with different keys", () => {
-      const service1 = new EncryptionService("key1");
-      const service2 = new EncryptionService("key2");
+      const mockConfig1 = createMockConfigService("key1");
+      const mockConfig2 = createMockConfigService("key2");
+      const service1 = new EncryptionService(mockConfig1);
+      const service2 = new EncryptionService(mockConfig2);
 
       const encrypted1 = service1.encrypt(testData);
       const encrypted2 = service2.encrypt(testData);

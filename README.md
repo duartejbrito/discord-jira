@@ -33,15 +33,15 @@ A powerful Discord bot that integrates with Jira to help you track and log work 
 
 ## 🚀 Commands
 
-| Command   | Description                       | Usage                                                    |
-| --------- | --------------------------------- | -------------------------------------------------------- |
-| `/setup`  | Configure your Jira connection    | Set up host, username, token, JQL query, and daily hours |
-| `/time`   | View work and log time manually   | Check work from X days ago and optionally log hours      |
-| `/hours`  | Configure daily hours for logging | Set number of hours to distribute across tickets daily   |
-| `/pause`  | Pause/resume automatic logging    | Toggle scheduled time logging on/off                     |
-| `/info`   | View your current configuration   | Display your Jira setup and settings                     |
+| Command   | Description                       | Usage                                                                         |
+| --------- | --------------------------------- | ----------------------------------------------------------------------------- |
+| `/setup`  | Configure your Jira connection    | Set up host, username, token, JQL query, and daily hours                      |
+| `/time`   | View work and log time manually   | Check work from X days ago and optionally log hours                           |
+| `/hours`  | Configure daily hours for logging | Set number of hours to distribute across tickets daily                        |
+| `/pause`  | Pause/resume automatic logging    | Toggle scheduled time logging on/off                                          |
+| `/info`   | View your current configuration   | Display your Jira setup and settings                                          |
 | `/health` | Check system health status        | View detailed system health including database, Discord, memory, and services |
-| `/ping`   | Check if the bot is responsive    | Simple health check command                              |
+| `/ping`   | Check if the bot is responsive    | Simple health check command                                                   |
 
 ## 📋 Prerequisites
 

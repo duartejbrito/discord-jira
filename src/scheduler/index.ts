@@ -214,7 +214,7 @@ export function initScheduledJobs() {
               config.host,
               config.username,
               config.token,
-              issue.issue.id,
+              issue.issue.key,
               issue.timeInSeconds,
               startDate
             );

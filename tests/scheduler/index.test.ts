@@ -483,7 +483,7 @@ describe("Scheduler", () => {
         "test.jira.com",
         "test@example.com",
         "validtoken123456",
-        "10001",
+        "TEST-1",
         firstCallTime,
         expect.any(Date)
       );
@@ -491,7 +491,7 @@ describe("Scheduler", () => {
         "test.jira.com",
         "test@example.com",
         "validtoken123456",
-        "10002",
+        "TEST-2",
         secondCallTime,
         expect.any(Date)
       );
@@ -555,7 +555,7 @@ describe("Scheduler", () => {
         "test.jira.com",
         "test@example.com",
         "validtoken123456",
-        "10001",
+        "TEST-1",
         28800, // 8 hours in seconds
         expect.any(Date)
       );

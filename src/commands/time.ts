@@ -311,7 +311,7 @@ export async function execute(interaction: ChatInputCommandInteraction) {
               host,
               username,
               token,
-              issue.issue.id,
+              issue.issue.key,
               issue.timeInSeconds,
               startDate
             );
